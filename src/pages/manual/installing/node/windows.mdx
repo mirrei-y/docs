@@ -1,0 +1,79 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: Node.js を Windows にインストールする
+description: Windows に Node.js をインストールする方法について解説します。
+written_by: Mirrei
+created_at: 2024-06-24 10:11:00
+updated_at: null
+parent: null
+---
+
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Info from "/src/components/Article/Info.astro";
+
+## Node.js とは
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/nodejs-unofficial-logo.webp" caption="さわらつき氏による、非公式 Node.js ロゴ。" />
+
+Node.js とは、JavaScript で記述できるサーバーサイド実行環境です。
+
+Web ブラウザ等と違い、TCP 通信やファイル操作などのサーバーに要求される操作を JavaScript で行うことができます。
+
+<Info>
+記事が古くなっていることがあります。
+詳しくはページ上部の作成日時・更新日時をご確認ください。
+</Info>
+
+## ダウンロード
+
+<CaptionImage src="/attachments/manual/installing/node/nodejs-website.webp" caption="nodejs.org のキャプチャ画像。" />
+
+[nodejs.org](https://nodejs.org) にアクセスし、トップページの「Download Node.js (LTS)」ボタンをクリックします。
+
+<CaptionImage src="/attachments/manual/installing/node/nodejs-installer-file.webp" caption="Node.js インストーラーファイル。" />
+
+## インストール
+
+### 起動
+
+<CaptionImage src="/attachments/manual/installing/node/nodejs-installer-wizard-1.webp" caption="Node.js インストーラーウィザード。" />
+
+その後、ダウンロードしたインストーラーを起動します。
+起動し、ディスクの空き容量を計算した後に Next ボタンが押せるようになります。
+
+### エンドユーザーライセンスの承諾
+
+<CaptionImage src="/attachments/manual/installing/node/nodejs-installer-wizard-2.webp" caption="Node.js インストーラーウィザード。エンドユーザーライセンスが記述されている。" />
+
+エンドユーザーライセンスが表示されます。
+`I accept the terms in the License Agreement` にチェックボックスを入れ、`Next` をクリックします。
+
+### インストール場所の選択
+
+<CaptionImage src="/attachments/manual/installing/node/nodejs-installer-wizard-3.webp" caption="Node.js インストーラーウィザード。インストール場所を選択できる。" />
+
+次にインストール場所ですが、これはデフォルトのままで構いません。
+
+### コンポーネントの選択
+
+<CaptionImage src="/attachments/manual/installing/node/nodejs-installer-wizard-4.webp" caption="Node.js インストーラーウィザード。インストールするコンポーネントを選択できる。" />
+
+ここでインストールするコンポーネントを設定できます。
+Node.js 標準パッケージマネージャーである `npm` などもここでインストールできます。
+
+これもデフォルトのままで構いません。
+
+### ネイティブモジュールビルドツールの選択
+
+<CaptionImage src="/attachments/manual/installing/node/nodejs-installer-wizard-5.webp" caption="Node.js インストーラーウィザード。ネイティブモジュールのビルドツールをインストールするかどうか。" />
+
+一部のパッケージには、C や C++ コードをコンパイルして使用するものがあります。
+しかし、ここでは使用しないため、これもチェックを入れず進めて構いません。
+
+### 準備完了
+
+<CaptionImage src="/attachments/manual/installing/node/nodejs-installer-wizard-6.webp" caption="Node.js インストーラーウィザード。" />
+
+「Install」ボタンを押してインストールしてください。
+
+インストールが終了したら、ダウンロードしたインストーラーは削除しても構いません。

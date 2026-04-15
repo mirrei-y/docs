@@ -1,0 +1,284 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第5回(バックエンド) サーバーを実装する
+description: HTTP を扱うサーバーを実装し、自分で作成したサーバーソフトウェアから Web ページを送信できるようにします。
+written_by: Mirrei
+created_at: 2024-06-24 09:55:00
+updated_at: null
+parent: /meister/js/2024/5
+---
+
+import Assignment from "/src/components/Article/Assignment.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import Tips from "/src/components/Article/Tips.astro";
+
+## HTTP を応用する
+
+では、ここまでの知識を踏まえて Web ページを提供するサーバーを作成するにはどうすればよいでしょうか。
+
+Web ページを送信するために HTTP というプロトコルが使用されていると学習しました。
+そこで、 HTTP のプロトコルに沿った通信をするサーバーを作成すれば、Web ページを提供するサーバーを作成したと言えます。
+
+今回は、ライブラリを使用して簡単に HTTP サーバーを作成します。
+
+### 前提環境のセットアップ
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/nodejs-unofficial-logo.webp" caption="さわらつき氏による、非公式 Node.js ロゴ。" />
+
+HTTP サーバーは、今まで JavaScript を動作させていた Web ブラウザでは作成することができません。
+セキュリティ上、Web ブラウザには通信を受け付ける機能が存在しないからです。
+
+そのため、別の JavaScript の実行環境をセットアップする必要があります。
+
+今回は、Node.js という、JavaScript で記述できるサーバーサイド実行環境をインストールします。
+
+[**このセクションは、別のページで解説しています。こちらをクリックすると、別ページへジャンプします。**](/manual/installing/node/windows)
+
+<Caution>
+もし、セットアップでわからないことがあったら遠慮せず TA にすぐに聞いてください。
+
+このセットアップ作業はプログラミングを学ぶ上でとても重要ではありますが、JavaScript の理解の本質的なものではないためです。
+</Caution>
+
+<Caution>
+macOS でのインストール解説はありません。
+
+ただし、似たような手順ですので、記事を見ながら進めていくことができると思います。
+</Caution>
+
+<CaptionImage src="/attachments/manual/installing/node/nodejs-website.webp" caption="nodejs.org のキャプチャ画像。" />
+
+## カレントディレクトリ
+
+### カレントディレクトリとは
+
+ここで、コマンドプロンプトに関する注意点を説明します。
+コマンドプロンプトは「カレントディレクトリ」という概念があり、これは開いているコマンドプロンプトのウィンドウで、現在位置であるフォルダのことです。
+
+例えば、「`A` というファイルを作成する」というコマンドを実行した際、カレントディレクトリの中に `A` というファイルが作成されます。
+
+そして、カレントディレクトリはコマンドプロンプトの `>` 以前に記載されています。
+そのため、カレントディレクトリはいつでも確認することができます。
+
+<CaptionImage src="/attachments/meister/js/2024/5/command-prompt.webp" caption="コマンドプロンプト。C:\Users\Mirrei がカレントディレクトリである。" />
+
+つまり、一番上のフォルダである `C:\` ドライブ（USB などを挿せば、`D:\` ドライブが出現したりします）からファイルの位置を指定しない場合、すべてカレントディレクトリからの相対的なファイルの位置として解釈します。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/pc.webp" caption="Windows における PC 特別フォルダ。この環境において、デスクトップ等は C ドライブがルートフォルダと解釈できる。" />
+
+### カレントディレクトリを指定するには
+
+Node.js において基本的にライブラリはカレントディレクトリにインストールされるので、このカレントディレクトリの設定が必要です。
+
+Windows 11 では、エクスプローラーのウィンドウを右クリックすると「ターミナルで開く」選択肢がある場合があります。
+この方法では、右クリックしたウィンドウで開いているフォルダをカレントディレクトリにしつつ、最速でターミナルを開くことができます。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/context-menu.webp" caption="Windows 11 のコンテキストメニュー。" />
+
+もし、macOS などの Windows 11 以外の OS を使用している場合は、まずコマンドプロンプト（macOS では「ターミナル」）を開きます。
+`cd `（スペースをお忘れなく） と入力しておき、カレントディレクトリに設定したいフォルダをドラッグアンドドロップすると、以下のようなコマンドが出来上がります。
+
+```bash
+cd 投げたフォルダのパス
+```
+
+この `cd` コマンドはカレントディレクトリを移動するコマンドです。
+
+これを実行することで、8割は好きな場所にカレントディレクトリを設定できます。
+
+## Node.js を使用する
+
+ここでは、Node.js をインタプリタとして実行してみましょう。
+
+コマンドプロンプトを開き、`node` と入力して実行します。
+カレントディレクトリは指定しません。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/node-interpreter.webp" caption="Node.js インタプリタ。" />
+
+`> ` と表示され、入力を受け付ける状態になりました。
+
+この状態で、JavaScript コードをいつでも実行することができます。試しに `1 + 1` と入力してみましょう。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/node-interpreter-2.webp" caption="1 + 1 を実行した Node.js インタプリタ。" />
+
+次に、画面に何か出力してみましょう。
+HTML に JavaScript を記述し、ブラウザで実行していた時は `document.write` メソッドを使用しましたが、Node.js ではページの概念がないため、 `document` は使用できません。
+Node.js では、 `console` オブジェクトの `console.log` メソッドを使用します。
+
+```js
+console.log("Hello from Node.js interpreter!");
+```
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/node-interpreter-3.webp" caption="console.log を実行した Node.js インタプリタ。" />
+
+<Tips>
+`undefined` と表示されているのは、 `console.log` 関数の戻り値がないためです。
+
+`1 + 1` で `2` と表示された時、「`1 + 1` の計算結果を出力する」というプログラムは書いていませんでした。
+これは、Node.js が勝手に戻り値を出力してくれるからです。
+
+`console.log` は戻り値がない（`undefined` の値である）ため、Node.js インタプリタで実行すると `undefined` が出力されます。
+</Tips>
+
+<Tips>
+Node.js のインタプリタや、継続的に実行されるプログラムは、Ctrl-C で終了し、元のコマンドの入力状態に戻ることができます。
+</Tips>
+
+## Fastify を使用する
+
+それでは、Fastify というライブラリを使用して HTTP のサーバーを実装していきます。
+
+<Tips>
+HTTP サーバーを作成するのに Express, Hono など別のライブラリを使用することもできます。
+
+また、ライブラリを必要としない方法もあります。
+例えば自分で1から通信を実装する方法や、Node.js 標準の http モジュールを使用する方法です。
+</Tips>
+
+### Fastify をインストールする
+
+新しいフォルダをカレントディレクトリにしたコマンドプロンプトが起動したら、下記コマンドを実行してください。
+
+```bash
+npm install fastify
+```
+
+この `npm` コマンドは、現在のディレクトリにおける Node.js 用のライブラリを管理するであり、サブコマンドである `install` でインストールを指示しています。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/node-modules.webp" caption="npm によって node_modules が作成されたディレクトリ。" />
+
+### HTTP サーバーを作成する
+
+では、実際に Fastify を用いて HTTP サーバーを作成します。
+
+お好きなファイル名（拡張子は `.js` としてください）でファイルを作成し、以下の内容を書き込んでください。
+ファイルは、node_modules が入っているフォルダと同じフォルダに格納してください。
+
+```js
+var Fastify = require("fastify");
+
+var server = Fastify();
+
+server.get("/", async (request, reply) => {
+    return "Hello!";
+});
+
+server.listen({ port: 80 });
+```
+
+<Tips>
+通常のアロー関数では `() => {` で始まりますが、今回は `async () => {` で始まります。
+
+これは、HTTP の項で説明した非同期処理と呼ばれるものを、JavaScript で動かす方法「async / await 構文」を使用しています。
+async/await 構文については、第6回で詳しく説明します。
+
+現状、Fastify の get 関数の第2引数に指定するコールバックは、async とつけておくだけでいいと認識しておけば大丈夫です。
+</Tips>
+
+<Tips>
+たいていは `var` ではなく `const` を使用するのですが、今回は学習していないので `var` を使用します。
+</Tips>
+
+書き込めたら、以下のコマンドを実行してください。
+
+ファイル名の場所は、作成したファイル名（拡張子も含みます）に置き換えてください。
+
+```bash
+node お好きなファイル名
+```
+
+この `node` コマンドは、第二引数に指定されたファイルを、Node.js で動作させるコマンドです。
+今までは HTML ファイルを作成し、書き込まれた JavaScript コードをブラウザが起動していましたが、今は手動で JavaScript を動作させるイメージです。
+
+実行しても何も出力されませんが、画面に出力するコードを何も書いていないので当たり前です。
+
+ブラウザを開いて、`localhost` と入力してアクセスしてみましょう。「Hello!」と出力されたら成功です。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/browser.webp" caption="localhost にアクセスしたブラウザの例。" />
+
+<Tips>
+`localhost` は、自分の PC を指す特別な URL（正確にはドメイン） です。
+今回は自分の PC でサーバープログラムを実行しているので、自分の PC にアクセスする必要があるためです。
+
+また、サンプルコードに `port: 80` と指定しています。
+これは、HTTP 通信に使用するポート番号と呼ばれる番号です。
+</Tips>
+
+### HTTP サーバーを拡張する
+
+では、先ほどの例を拡張してみましょう。
+
+先ほどの `localhost` と入力した例では、URL 的に見ると `http://localhost/` となっています。
+しかし実際の Web サイトはいろいろなページが存在し（例えば、このサイトの場合 `/meister/js/2024/5`, `/meister/js/2024/5/backend`, `/meister/js/2024/5/frontend` など…）、それぞれ別のデータを受信し表示することができます。
+
+#### エンドポイントを追加する
+
+では、 `localhost/sample1` でアクセスできるように拡張してみましょう。
+この、`/sample1`, `/sample2`, ... などのファイル名の部分を、サーバーから見た場合に**エンドポイント**と呼びます。
+
+`localhost/` でアクセスした際の処理は、この部分が担っています。
+
+```js
+server.get("/", async (request, reply) => {
+    return "Hello!";
+});
+```
+
+この部分を複数に増やし、`"/"` を `"/sample1"` に変更してみましょう。
+ついでに、`return "Hello!"` もお好きな文字に変えてみてください。
+
+```js
+server.get("/sample1", async (request, reply) => {
+    return "Sample 1";
+});
+```
+
+実行すると、それぞれ別の URL で別のページにアクセスできることがわかりました。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/fastify-endpoints.webp" caption="各エンドポイントにアクセスした例。定義されていない場合、404 が返される。" />
+
+#### ファイルを提供する
+
+また、HTTP はファイルを提供することもでき、Fastify もその機能を搭載しています。
+
+`var Fastify = require("fastify");` の後に一行追加し、以下の内容を挿入してください。
+これは、ファイルを操作するライブラリを読み込み、でいます。
+
+```js
+var fs = require("fs/promises");
+```
+
+その後、新しいエンドポイントを追加します。
+
+この時、return で返す内容を、ファイルを読み込む関数である `fs.readFile` の戻り値にしてください。
+`fs.readFile` の第一引数には、読み込むファイルパスを指定してください。
+
+エンドポイントの名前は、拡張子をつけることをお勧めします。
+つけなくても動作しますが、実際にそのファイルを開くときに不便です。
+
+サンプルは動画ファイルですが、動画ファイルでなくても構いません。
+お好きなものを指定してください。
+
+```js
+server.get("/movie.mp4", async (request, reply) => {
+    return fs.readFile("C:\\Users\\Mirrei\\movie.mp4");
+});
+```
+
+<Tips>
+Windows であれば、ファイルを右クリックして「パスのコピー」をクリックすると簡単にコピーできます。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/context-menu-copy.webp" caption="ファイルの右クリックメニューで「パスのコピー」を選択する図。" />
+</Tips>
+
+実際に起動し、作成したエンドポイント（この場合、`localhost/movie.mp4`）にアクセスしてみましょう。
+指定したファイルがダウンロードされたら成功です。
+
+## 課題
+
+<Assignment regulation='[["fastify", "Fastify を使用する"], ["\\.get\\(./image.png", "/image.png を実装する"], ["return (require\\(.)?fs(.\\))?\\.readFile\\(.+image.png", "image.png を送信する"], ["console\\.log\\(.image\\.png.\\)", "コンソール画面に出力する"]]'>
+以下の仕様を満たす HTTP サーバーを、Fastify で記述してください。
+* `/image.png` にアクセスされた際、`image.png` を読み込み送信する。
+* また、その際同時にコンソールに `image.png` と文字を出力する
+</Assignment>

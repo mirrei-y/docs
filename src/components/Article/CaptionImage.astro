@@ -1,0 +1,43 @@
+---
+interface Props {
+    src: string;
+    to?: string;
+    caption: string;
+    cite?: string;
+}
+
+const { src, to, caption, cite } = Astro.props;
+---
+
+<figure>
+    <a href={to ?? cite ?? src} target="_blank" rel="noreferrer">
+        <img {src} loading="lazy" decoding="async" alt={caption} />
+    </a>
+    {caption && caption.length > 0 ? <figcaption>
+        {cite ? <cite><a href={cite}>{caption}</a></cite> : <></>}
+        {!cite ? <span>{caption}</span> : <></>}
+    </figcaption> : <></>}
+</figure>
+
+<style>
+    figure {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5em;
+
+        margin-block: 3em;
+
+        a {
+            display: flex;
+        }
+        img {
+            max-width: 100%;
+            max-height: 80vh;
+        }
+        figcaption {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+    }
+</style>

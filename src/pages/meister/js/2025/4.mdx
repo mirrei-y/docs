@@ -1,0 +1,1227 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第4回 オブジェクト指向
+description: オブジェクト指向プログラミング、オブジェクト、クラス、継承について学習します。
+written_by: Mirrei
+created_at: 2025-06-17 10:00:06
+updated_at: null
+parent: /meister/js/2025
+---
+
+import Info from "/src/components/Article/Info.astro";
+import Tips from "/src/components/Article/Tips.astro";
+import Hint from "/src/components/Article/Hint.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import InlineImages from "/src/components/Article/InlineImages.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Assignment from "/src/components/Article/Assignment.astro";
+
+## オブジェクト指向
+
+JavaScript は、「オブジェクト指向型」のプログラミング言語です。
+オブジェクト指向は、すべての値を「**オブジェクト**」とその継承で表現します。
+
+例えば、C 言語は非オブジェクト指向型の言語です。
+
+C 言語でファイル読み込みのコードを書いてみると、以下のようになります。
+関数宣言や一部の変数宣言などは省略しています。
+
+```c
+fp = fopen("ファイル名", "r"); // NOTE: ファイルを開く
+
+if (fp != NULL) {
+    check = fgets(s, 100, fp);  // NOTE: ファイルから文字列読み込み
+
+    if (check != NULL) {
+        printf("%s", s); // NOTE: もし読み込めたら、読み込んだ文字列を出力
+    } else {
+        printf("\n"); // NOTE: もし読み込めなかった（すでにファイルを最後まで読み込み終わった）ら、改行を出力
+    }
+} else {
+    // NOTE: もし、ファイルが開けなかったら（ここでは省略）
+}
+
+fclose(fp); // NOTE: ファイルを閉じる
+```
+
+ここで重要なのは、`fopen`, `fgets`, `fclose` です。
+
+`fopen` でファイルを開いた結果の値（ファイルディスクリプタ）は、その後 `fgets`, `fclose` を実行する際にも指定されています。
+
+また、「開けなかった」、「読み込めなかった」などのエラーは、「NULL」という変数と比較していることで検出しています。
+
+### オブジェクト指向
+
+次に、同じ機能を持つオブジェクト指向型のプログラムを書いてみます。
+
+<Info>
+ここでは JavaScript をベースに記載しますが、オブジェクト指向をわかりやすくするため、実際には動作しないプログラムを書きます。
+</Info>
+
+```js
+try {
+    f = File.open("ファイル名", "r"); // NOTE: ファイルを開く
+
+    print(f.read()); // NOTE: ファイルから文字列を読み込み、出力（print は仮の関数）
+
+    f.close(); // NOTE: ファイルを閉じる
+} catch {
+    // NOTE: もし、エラーが発生したら（ここでは省略）
+}
+```
+
+先ほどのコードより、何をやっているか明確になりました。
+
+重要なのは、呼んでいる関数です。
+先ほどは「ファイルを開く」「ファイルを読み込む」「ファイルを閉じる」の3つの動作をそれぞれ `fopen`, `fgets`, `fclose` で実装していました。
+しかし、オブジェクト指向型では、`File.open` で取得した値そのものである変数 `f` の名前が付いた `f.read`, `f.close` を使用しています。
+
+この利点は、操作の対象が、人間から見るとより明確になることです。
+手続き型において、関数名 `fgets` では「ファイルを読み込む」ことしか読み取れません。
+一方オブジェクト指向型では、関数名 `f.read` から「f のファイルを読み込む」ということを読み取れます。
+
+つまり、「何に」「何をする」という操作が、手続き型より明確であるということです。
+
+## オブジェクト
+
+JavaScript において、**オブジェクト**は型で表現されます。
+オブジェクトは、とても簡単に説明すると、キーバリュー形式のテーブルですべての値を表現するものです。
+
+例えば、人間について、そのデータを管理することを考えてみましょう。
+人間には、名前・年齢・職業・出身地などの属性があります。
+
+以下のように、それぞれに対して変数を宣言してデータを管理するのでは非効率です。
+
+```js
+const person1_name = "山田太郎";
+const person1_age = 30;
+const person1_job = "エンジニア";
+const person1_origin = "東京都";
+```
+
+「キーバリュー形式のテーブル」というのは、以下のような構造を指します。
+
+| キー | 値 |
+|-|-|
+| 名前 | 山田太郎 |
+| 年齢 | 30 |
+| 職業 | エンジニア |
+| 出身地 | 東京都 |
+
+一つの物体に対する属性を、見出しと内容の1:1、つまりキーとバリュー（値）で管理するような構造です。
+
+これが、JavaScript で用いられる**オブジェクト**の概念です。
+
+<Hint>
+C 言語で例えると、構造体によく似た使用方法を持っています。
+
+後述する記法や、プロパティへのアクセス方法なども C 言語の構造体とよく似ています。
+</Hint>
+
+### 構文
+
+オブジェクトは、以下のような式で定義します。
+
+```js
+// 空のオブジェクトを作成
+{}
+
+// 中身が設定されたオブジェクトを作成
+{
+    name: "山田太郎",
+    age: 30,
+    job: "エンジニア",
+    origin: "東京都"
+}
+```
+
+`キー: 値` のようにデータを羅列し、それらを `,` (カンマ) で結合します。
+
+<Tips>
+`,` の後に改行を含める必要はありません。
+例えば、以下のようなものも有効です。
+
+```js
+{ name: "山田太郎", age: 30, job: "エンジニア", ... }
+```
+</Tips>
+
+<Tips>
+「カンマで結合する」とありますが、最後のデータの末尾にカンマがついていてもかまいません。
+
+```js
+{
+    name: "山田太郎",
+    age: 30,
+    job: "エンジニア",
+    origin: "東京都", // カンマがついている
+}
+```
+
+行をコピーするときや、Git でソースコードを管理するときなど、末尾にカンマがついていたほうが便利なことも多いです。
+</Tips>
+
+オブジェクトは型の一種であると説明しましたので、以上の記法を使って定義した値は変数に代入することができます。
+
+```js
+const yamada_taro = {
+    name: "山田太郎",
+    age: 30,
+    job: "エンジニア",
+    origin: "東京都"
+};
+```
+
+これで、商品データ一つにつき、一つの変数で管理できるようになりました。
+
+### プロパティにアクセスする
+
+先ほど作成したオブジェクト型の変数 `yamada_taro` に対して、名前や年齢のデータを参照するには、`.` (ドット) で区切って、その直後にキーを指定します。
+
+```js
+// yamada_taro 変数の age データにアクセスしている
+let age = yamada_taro.age;
+```
+
+また、参照だけではなく代入も行うことができます。
+
+```js
+yamada_taro.age = 31;
+```
+
+要するに、`yamada_taro.name` や、`yamada_taro.age` が一つの変数のようなものになっているのです。
+これを、このオブジェクトの**プロパティ**と呼びます。
+
+<Caution>
+JavaScript において、ポインタは存在しないということに留意してください。
+
+```js
+let yamada_taro = { ... }; // 以前の定義を流用
+
+let age = yamada_taro.age // この時点では age = 30
+age = 31; // age = 31 になるが、yamada_taro.age は 30 のまま
+
+yamada_taro.age // yamada_taro.age は 30 のままなので、30
+```
+</Caution>
+
+#### 変数によるキー指定
+
+オブジェクトも、配列のように `yamada_taro[...]` を使用してプロパティにアクセスすることができます。
+
+以下の二つの式は、同じ意味を持ちます。
+
+```js
+yamada_taro["name"]
+yamada_taro.name
+```
+
+ここで、`"name"` と、ダブルクォーテーションで括られ、文字列となっていることに注目してください。
+
+変数に置き換えることで、変数でキーを指定することができます。
+
+```js
+const key_variable = "name"; // 変数なので、名前は何でもよい
+
+yamada_taro[key_variable] // yamada_taro.name を指す
+```
+
+これは、[配列の変数によるインデックス指定](2#変数によるインデックス指定)と同じ挙動を示します。
+
+#### 動的な代入
+
+JavaScript では、オブジェクトに存在するプロパティは可変です。
+事前に定義しなくても、後から追加したり、書き換えたりすることができます。
+
+```js
+let tanaka_hanako = {
+    name: "田中花子",
+    age: 25,
+    job: "デザイナー",
+    origin: "大阪府"
+};
+
+tanaka_hanako.hobbies = ["読書"]; // hobbies は存在しないが、後から追加できる
+
+print(tanaka_hanako.hobbies); // 後から追加したものは、追加した時点で利用可能になる
+```
+
+### 例: データベースを作成する
+
+これができると、[配列](2#配列)を使用し、原始的なデータベースが作成できるようになります。
+
+```js
+const people = [
+    {
+        name: "山田太郎",
+        age: 30,
+        job: "エンジニア",
+        origin: "東京都"
+    },
+    {
+        name: "田中花子",
+        age: 25,
+        job: "デザイナー",
+        origin: "大阪府"
+    },
+    {
+        name: "佐藤一郎",
+        age: 40,
+        job: "教師",
+        origin: "北海道"
+    },
+    {
+        name: "鈴木恵子",
+        age: 35,
+        job: "医師",
+        origin: "福岡県"
+    },
+];
+
+let avg = 0;
+for (const person of people) {
+    avg = avg + person.age;
+}
+avg = avg / people.length;
+```
+
+この例では、データベースに登録している人の平均年齢が、変数 `avg` に代入されます。
+
+## クラス
+
+しかし、以上のようなデータベースでは、同じようなオブジェクトをいくつも作成する際に非効率的です。
+
+先ほどのデータベースの人間オブジェクトに、「歩く」という動き（関数）をつけることを考えてみましょう。
+オブジェクトに[アロー関数](3#アロー関数)を追加します。
+
+```js
+{
+    name: "山田太郎",
+    age: 30,
+    job: "エンジニア",
+    origin: "東京都",
+    walkTo: (place) => {
+        // ...
+    }
+},
+```
+
+これを以下のすべてのデータに対して行います。
+もちろんデータが増えればその都度関数を作り、「食べる」を追加したければ全員に対して `eat` メソッドを定義します。
+
+```js
+const people = [
+    {
+        name: "山田太郎",
+        age: 30,
+        job: "エンジニア",
+        origin: "東京都"
+    },
+    {
+        name: "田中花子",
+        age: 25,
+        job: "デザイナー",
+        origin: "大阪府"
+    },
+    {
+        name: "佐藤一郎",
+        age: 40,
+        job: "教師",
+        origin: "北海道"
+    },
+    {
+        name: "鈴木恵子",
+        age: 35,
+        job: "医師",
+        origin: "福岡県"
+    },
+];
+```
+
+……というのは、とても大変です。
+
+この場合、「人間」というある程度共通した動きを持つ物体を「**クラス**」に抽象化するという手法があります。
+
+### 構文
+
+**クラス**を定義するには、`class クラス名 {}` という構文を使用し、まずクラス名を決定します。
+
+```js
+class Person {}
+```
+
+この時点で、空のクラスは作成されています。
+
+#### プロパティ
+
+クラスはオブジェクトの一種です。
+そのため、クラスにもプロパティを指定できます。
+
+クラス内のプロパティは、オブジェクトと異なり `キー = 値;` の形式で、代入するような文を記述します。
+
+```js
+class Person {
+    name = "山田太郎";
+    age = 30;
+    job = "エンジニア";
+    origin = "東京都";
+}
+```
+
+例えば今定義しているクラスは「人間」を抽象化したものになりますので、名前などのプロパティは後程代入されます（人間という概念そのものには、名前や職業は決定づけられていない）。
+そのため、代入せず宣言だけすることも可能です。`let variable;` と書いた時と同じイメージです。
+
+```js
+class Person {
+    name;
+    age;
+    job;
+    origin;
+}
+```
+
+宣言だけするとき、ほとんどの場合は後述する「コンストラクタ」で代入を行います。
+
+#### メソッド
+
+クラスに定義する関数は、プロパティと異なり**メソッド**と呼ばれます。
+
+<Tips>
+厳密には、「クラスに定義される関数＝メソッド」ではありません。
+クラスにプロパティを定義し、そのプロパティに関数を代入することも可能です。
+</Tips>
+
+クラスでメソッドを定義するには、`メソッド名() {}` という構文を使用します。
+[`function` キーワードによる関数定義](3#構文)から `function` キーワードをなくしたようなイメージです。
+
+もちろん、[引数](3#引数)や[戻り値](3#戻り値)も使用できます。
+
+```js
+class Person {
+    name;
+    age;
+    job;
+    origin;
+
+    walk() {
+        // ...
+    }
+    eat(food) {
+        // ...
+    }
+}
+```
+
+### インスタンス化
+
+クラスは、実際に使用するために、新しくオブジェクトを生成（**インスタンス化**）する必要があり、生成したオブジェクトを**インスタンス**と呼びます。
+
+**インスタンス化**するには、`new クラス名()` という式を使用します。
+
+```js
+new Person()
+```
+
+この例では、先ほど作成した Person クラスをインスタンス化しています。
+
+インスタンスは、一度生成されるとそれらは独立です。
+インスタンスに対しては、先ほどクラス定義で定義（抽象化）したプロパティやメソッドを使用できます。
+
+```js
+const yamada_taro = new Person();
+const yamada_hanako = new Person();
+
+// 山田太郎さんは歩いたが、山田花子さんが歩いたわけではない
+yamada_taro.walk();
+
+// 山田太郎さんは小学生になった
+yamada_taro.job = "小学生";
+
+// 山田太郎さんは小学生だが、山田花子さんは小学生ではない
+yamada_hanako.job
+```
+
+<Hint>
+たい焼きは、型に材料を入れてたい焼きを作ることで出来上がります。
+これは、たい焼きの型（クラス）から、たい焼き（インスタンス）を作っているようなものです。
+
+焼きあがったそれぞれのたい焼きは異なるものなので、どこに焦げ目がついているかなどの特徴（プロパティ）や、どこから食べるか（メソッド）があります。
+ですが、もともとのたい焼きの型は1つのみで、基本的には同じような形から派生しています。
+
+この、一つの定義・複数の実態という概念がクラスで、同じような形を派生させるという概念がオブジェクト指向です。
+</Hint>
+
+<Hint>
+クラスの定義を見て処理を追うことは重要です。
+ですが、クラス・インスタンスの関係性がわからずに追うと、特にプロパティにおいては現在の状態を見誤ってしまう原因となります。
+
+```js
+// インスタンスごとに変数を持ち、インクリメント・デクリメントできるクラス
+class Counter {
+    count = 0;
+
+    increment() {
+        this.count++;
+    }
+    decrement() {
+        this.count--;
+    }
+}
+
+Counter.increment(); // エラー。クラス（たい焼きの型）自体は抽象的概念のため、操作できない。
+Counter.count = 10; // 上と同様、エラー。たい焼きの型の焦げ目を操作する、よくわからない状況。
+
+const c1 = new Counter();
+const c2 = new Counter();
+
+c1.increment();
+c2.increment();
+c1.decrement();
+c1.increment();
+c2.increment();
+c1.decrement();
+c2.decrement();
+
+// c1.count と c2.count の値、わかりますか？
+// （this については次に説明します）
+```
+</Hint>
+
+### this キーワード
+
+**this キーワード** は特別な変数です。
+クラスのメソッド内で定義せず使用できる変数で、メソッドが呼ばれたインスタンス自体を指します。
+
+---
+
+ところで、先ほど紹介したデータベースのデータに対して、それぞれ自己紹介文を作成したいと考えたとします。
+自己紹介文は、`${name} ${age}歳 (${job})` というフォーマットにすると仮定します。
+
+```js
+const people = [
+    {
+        name: "山田太郎",
+        age: 30,
+        job: "エンジニア",
+        origin: "東京都"
+    },
+    // ...
+];
+
+// print は、自己紹介文を出力する関数と仮定します
+
+for (const person of people) {
+    print(`${person.name} ${person.age}歳 (${person.job})`);
+}
+```
+
+ですが、この自己紹介文のフォーマットはオブジェクトの外に定義されています。
+オブジェクトの外に定義されていると、同じ自己紹介文を使用するたびにフォーマットから定義しなくてはなりません。
+
+---
+
+先ほどのメソッドと、**this キーワード**を利用してこの問題を解決できます。
+
+```js
+class Person {
+    // ...略...
+
+    getDisplayName() {
+        return `${this.name} ${this.age}歳 (${this.job})`;
+    }
+}
+
+const yamada_taro = new Person();
+yamada_taro.name = "山田太郎";
+yamada_taro.age = 30;
+yamada_taro.job = "エンジニア";
+
+const yamada_hanako = new Person();
+yamada_hanako.name = "山田花子";
+yamada_hanako.age = 25;
+yamada_hanako.job = "デザイナー";
+
+yamada_taro.getDisplayName() // "山田太郎 30歳 (エンジニア)"
+yamada_hanako.getDisplayName() // "山田花子 25歳 (デザイナー)"
+```
+
+`getDisplayName` メソッド内では、`this` を使用し、メソッドが呼ばれたインスタンスを取得しています。
+そのインスタンスの中にある `name`, `age`, `job` プロパティを参照しているので、`getDisplayName` は各インスタンスによって異なる動きをします。
+
+---
+
+また、this キーワードを使用して、メソッドを呼ぶこともできます。
+
+```js
+class Person {
+    // ...略...
+
+    say(sentence) {
+        // ...
+    }
+    sayName() {
+        this.say(this.name);
+    }
+}
+```
+
+### コンストラクタ
+
+ところで、先ほどプロパティの節において「宣言だけすることもある」と述べました。
+実際にクラスが使用されるときは、宣言だけを行い、実際の代入を**コンストラクタ**内で行うことが多いです。
+
+**コンストラクタ**は特別なメソッドで、`new` を用いてクラスがインスタンス化された際に実行されます。
+戻り値を持つことはできませんが、引数を持つことができ、その引数は `new Person()` を実行したときのカッコの中に記述します。
+
+コンストラクタは、`constructor` という名前を持つメソッドとして定義します。
+
+```js
+class Person {
+    name;
+    age;
+    job;
+    origin;
+
+    constructor(name, origin) {
+        this.name = name;
+        this.age = 0;
+        this.job = "赤ちゃん";
+        this.origin = origin;
+    }
+
+    walk() {
+        // ...
+    }
+    eat(food) {
+        // ...
+    }
+    getDisplayName() {
+        return `${this.name} ${this.age}歳 (${this.job})`;
+    }
+}
+
+const yamada_taro = new Person("山田太郎", "東京都"); // new Person() の時点でコンストラクタが発動！
+yamada_taro.age // コンストラクタで 0 を代入しているので、この値は 0
+```
+
+### クラスの継承
+
+クラスは、**継承**という操作をすることができます。
+
+継承とは、もとのクラスから新しいクラスを作成することです。
+クラスを継承すると、もともとのプロパティのデフォルトの値、すべてのメソッドが引き継がれます。
+
+<Caution>
+クラスを新しく作るのであって、さきほどのインスタンスを作ることとは異なります。
+
+そのため、「インスタンスは、一度生成されるとそれらは独立」の概念と混同しないように気を付けてください。
+</Caution>
+
+継承は、**extends** キーワードを使用し、クラス名の後に記述します。
+
+```js
+class Animal {
+
+    name = "動物";
+    age = 0;
+
+    constructor(name) {
+        this.name = name;
+    }
+
+    walk() {
+        // ...
+    }
+    eat(food) {
+        // ...
+    }
+    say(sentences) {
+        // ...
+    }
+}
+
+class Person extends Animal {
+
+    name = "人間";
+    age = 1;
+
+    sayName() {
+        this.say(this.name);
+    }
+
+}
+```
+
+この例では、先ほどの `Person` クラスに対して、 `Animal` クラスを継承するように変更しました。
+また、`walk`、`eat`、`say` メソッドを `Animal` クラスに移動しました。
+
+この状態で、以下のように `Person` クラスのインスタンスから `walk` メソッドを呼び出すこともできます。
+`Person` クラスが `walk` メソッドのある `Animal` クラスを「継承」しているからです。
+
+```js
+let person = new Person();
+
+person.walk();
+```
+
+#### メソッドをオーバーライドする
+
+例えば、上の例において、 `Animal` クラスを継承した `Person` クラスでもメソッドを上書きして記述したい場合があります。
+
+この上書きのことを「オーバーライド」といいます。
+オーバーライドには、特に特別な構文等は存在せず、上書きしたいメソッドを継承先（この場合では `Person` クラス）に書き込むだけとなります。
+
+```js
+class Animal {
+    // ...略...
+
+    eat(food) {
+        // ...
+    }
+}
+
+class Person extends Animal {
+    eat(food) {
+        // error というエラーを出す関数があると仮定します
+        return error("ちょっとお腹がすいてないので、やめておきます");
+    }
+}
+
+new Animal().eat(bread);
+new Person().eat(bread); // エラー発生
+```
+
+#### 継承元のクラスを呼び出す
+
+クラスを継承した場合、`super` キーワードを使って親クラス（継承元）のコンストラクタやメソッドを呼び出すことができます。
+`this` と同じように、変数として扱っているイメージです。
+
+例えば、以下のように `Person` クラスの `eat` メソッドで、親クラスの `eat` メソッドを呼び出すことができます。
+
+```js
+class Animal {
+    // ...略...
+
+    eat(food) {
+        // ...
+    }
+}
+
+class Person extends Animal {
+    // ...略...
+
+    eat(food) {
+        super.eat(food);
+        this.say(`${food} おいしい`);
+    }
+}
+
+const person = new Person();
+person.eat("🍛");
+```
+
+#### コンストラクタをオーバーライドする
+
+なお、**コンストラクタをオーバーライドするときには `super` を必ず必要とする**、という制約があります。
+
+以下の例では、`this.name = name;` が共通しています。
+`Person` クラスのコンストラクタで、`Animal` クラスのコンストラクタを呼び出すと処理を共通化できます。
+
+```js
+class Animal {
+
+    constructor(name) {
+        this.name = name;
+    }
+
+    // ...略...
+
+}
+
+class Person extends Animal {
+
+    constructor(name, age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    // ...略...
+
+}
+```
+
+<Tips>
+処理の共通化を行うと、プログラムが読みやすくなったり、書き直す際にミスが少なくなったりします。
+
+ただし、無駄な共通化をするとかえって読みにくくなることもあります。
+実際には適度に共通化をすることが大事です。
+</Tips>
+
+継承元のクラスのコンストラクタを呼び出すには、`super` を関数のように呼び出します。
+
+```js
+class Person extends Animal {
+    constructor(name, age) {
+        super(name); // NOTE: ここで、Animal クラスのコンストラクタを呼び出している
+        this.age = age;
+    }
+
+    // ...略...
+
+}
+
+new Person("山田太郎", 30)
+// コンストラクタの共通する挙動を共通化することができた
+```
+
+## 標準メソッド
+
+ところで、このオブジェクトやクラスを用いる「オブジェクト指向」は、具体的にどんなところで利用されているのでしょうか。
+
+### 配列
+
+例えば、「配列」が挙げられます。
+
+配列はオブジェクトであり、クラスの一種でもあります。
+実は配列は、`[]` ではなく、`new Array()` と書いても作成することができます。
+
+```js
+const array = new Array();
+array[0] // 配列と何も変わらない（そもそも Array が配列の正体）
+
+const array2 = [];
+array[0] // もちろん、今までの書き方でも全く問題なし
+```
+
+`[]` を用いて作成された配列も、`new Array()` を用いて作成された配列も、本質的には何も変わりません。
+配列は、オブジェクトなのです。
+
+<Tips>
+ここからわかることとして、`[]` は配列クラスのインスタンスであるということです。
+</Tips>
+
+配列のメソッドには、以下のようなものがあります。
+
+#### push
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/push)
+
+push は、配列に要素を追加するメソッドです。
+
+<Info>
+第二回で配列を操作するのにインデックスを指定していたと思いますが、実はインデックスを指定して挿入する方法はあまり使用するべきではありません。
+
+例えば、空の配列に対していきなり 3 を指定してデータを挿入したとします。
+すると、0, 1, 2 の先頭 3 つは `undefined` になってしまいます。
+</Info>
+
+```js
+const array = [];
+
+array.push(3);
+array.push(4);
+array.push(5);
+
+array // [3, 4, 5]
+```
+
+#### shift
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/shift)
+
+shift は、配列の最初の要素を削除し、その最初の要素を戻り値に持つメソッドです。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+const firstElement = array.shift();
+
+array // [1, 2, 3, 4]
+firstElement // 0
+```
+
+#### pop
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/pop)
+
+pop は、配列の最後の要素を削除し、その最後の要素を戻り値に持つメソッドです。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+const lastElement = array.pop();
+
+array // [0, 1, 2, 3]
+lastElement // 4
+```
+
+#### includes
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/includes)
+
+includes は、配列の中に指定された要素が入っているかどうかを、ブーリアン値で戻り値に持つメソッドです。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+array.includes(0) // true
+array.includes(-1) // false
+```
+
+#### slice
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/slice)
+
+slice は、配列に対して開始地点と終了地点を指定し、その範囲を要素として持つ新しい配列を作成するメソッドです。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+const sliced = array.slice(1, 3);
+
+array // [0, 1, 2, 3, 4]
+sliced // [1, 2]
+```
+
+#### join
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/join)
+
+join は、配列の全要素を指定した文字列で結合します。
+
+```js
+const array = ["Hello", "world", "from", "JavaScript!"];
+
+const joined = array.join(" ");
+
+array // ["Hello", "world", "from", "JavaScript!"]
+joined // "Hello world from JavaScript"
+```
+
+#### length
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/length)
+
+これはメソッドではなくプロパティですが、[第2回で説明した length](2#配列の長さを取得する) についても、プロパティの一種です。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+const length = array.length;
+
+array // [0, 1, 2, 3, 4]
+length // 5
+```
+
+#### その他
+
+その他、ソートを行う `sort()` や、要素を検索する `find()` などもあります。
+
+有名なブラウザである Firefox を開発している Mozilla という団体が提供している、[MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array) が参考になると思います。
+左側メニューの、「インスタンスメソッド」や「インスタンスプロパティ」を見てみるとよいと思います。
+
+### 文字列
+
+JavaScript では、文字列もオブジェクトの一種として扱われます。
+
+```js
+const str1 = "Hello!";
+const str2 = new String("Hello!");
+```
+
+文字列自体の [MDN ドキュメントはこちら](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String)です。
+
+#### toLowerCase
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/toLowerCase)
+
+toLowerCase は、文字列内のすべての英字を小文字に変換した新しい文字列を返します。
+
+```js
+const str = "Hello World!";
+
+const lower = str.toLowerCase();
+
+str // "Hello World!"
+lower // "hello world!"
+```
+
+#### toUpperCase
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/toUpperCase)
+
+toUpperCase は、文字列内のすべての英字を大文字に変換した新しい文字列を返します。
+
+```js
+const str = "Hello World!";
+
+const upper = str.toUpperCase();
+
+str // "Hello World!"
+upper // "HELLO WORLD!"
+```
+
+#### split
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/split)
+
+split は、指定した区切り文字や正規表現で文字列を分割し、配列として返します。
+
+```js
+const str = "apple,banana,orange";
+
+const arr = str.split(",");
+
+str // "apple,banana,orange"
+arr // ["apple", "banana", "orange"]
+```
+
+#### replace
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/replace)
+
+replace は、最初に一致した部分だけを置換します。
+
+```js
+const str = "apple banana apple";
+
+const replaced = str.replace("apple", "orange");
+
+str // "apple banana apple"
+replaced // "orange banana apple"
+```
+
+#### replaceAll
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll)
+
+replaceAll は、一致したすべての部分を置換します。
+
+```js
+const str = "apple banana apple";
+
+const replacedAll = str.replaceAll("apple", "orange");
+
+str // "apple banana apple"
+replacedAll // "orange banana orange"
+```
+
+#### trim
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/trim)
+
+trim は、文字列の両端の空白（スペースや改行）を取り除くメソッドです。
+
+```js
+const str = "  Hello!  ";
+
+const trimmed = str.trim();
+
+str // "  Hello!  "
+trimmed // "Hello!"
+```
+
+#### length
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/length)
+
+配列と同様に、メソッドではなくプロパティですが、文字列でもその文字列の長さを `length` プロパティを使用して取得することができます。
+
+```js
+const str = "こんにちは";
+
+const length = str.length;
+
+str // "こんにちは"
+length // 5
+```
+
+## 課題
+{/*
+class Student {
+    name;
+    age;
+    grade;
+    subjects;
+
+    constructor(name, age, grade) {
+        this.name = name;
+        this.age = age;
+        this.grade = grade;
+        this.subjects = [];
+    }
+
+    introduce() {
+        return `こんにちは、${this.name}です。${this.age}歳で、${this.grade}年生です。`;
+    }
+
+    addSubject(subject) {
+        this.subjects.push(subject);
+    }
+
+    getSubjects() {
+        return this.subjects.join(", ");
+    }
+}
+
+class HighSchoolStudent extends Student {
+    club;
+
+    constructor(name, age, grade, club) {
+        super(name, age, grade);
+        this.club = club;
+    }
+
+    introduce() {
+        return super.introduce() + `${this.club}部に所属しています。`;
+    }
+}
+*/}
+<Assignment asserter={() => {
+
+    // NOTE: クラス存在チェック
+    if (typeof Student !== "function") return {
+        ok: false,
+        message: "Student クラスが定義されていません。",
+    };
+    if (typeof HighSchoolStudent !== "function") return {
+        ok: false,
+        message: "HighSchoolStudent クラスが定義されていません。",
+    };
+
+    // NOTE: Student クラスのテスト
+    try {
+        const student = new Student("田中太郎", 16, 2);
+
+        // プロパティの確認
+        if (student.name !== "田中太郎") return {
+            ok: false,
+            message: "Student のコンストラクタで name プロパティが正しく設定されていません。",
+        };
+        if (student.age !== 16) return {
+            ok: false,
+            message: "Student のコンストラクタで age プロパティが正しく設定されていません。",
+        };
+        if (student.grade !== 2) return {
+            ok: false,
+            message: "Student のコンストラクタで grade プロパティが正しく設定されていません。",
+        };
+        if (!Array.isArray(student.subjects)) return {
+            ok: false,
+            message: "Student のコンストラクタで subjects プロパティが配列として初期化されていません。",
+        };
+
+        // introduce メソッドの確認
+        if (typeof student.introduce !== "function") return {
+            ok: false,
+            message: "Student クラスに introduce メソッドが定義されていません。",
+        };
+        const intro = student.introduce();
+        if (!intro.includes("田中太郎") || !intro.includes("16歳") || !intro.includes("2年生")) return {
+            ok: false,
+            message: "introduce メソッドが期待される形式の文字列を返していません。",
+        };
+
+        // addSubject メソッドの確認
+        if (typeof student.addSubject !== "function") return {
+            ok: false,
+            message: "Student クラスに addSubject メソッドが定義されていません。",
+        };
+        student.addSubject("数学");
+        if (!student.subjects.includes("数学")) return {
+            ok: false,
+            message: "addSubject メソッドが正しく動作していません。",
+        };
+
+        // getSubjects メソッドの確認
+        if (typeof student.getSubjects !== "function") return {
+            ok: false,
+            message: "Student クラスに getSubjects メソッドが定義されていません。",
+        };
+        student.addSubject("英語");
+        const subjects = student.getSubjects();
+        if (!subjects.includes("数学") || !subjects.includes("英語")) return {
+            ok: false,
+            message: "getSubjects メソッドが正しく動作していません。",
+        };
+
+    } catch (error) {
+        return {
+            ok: false,
+            message: "Student クラスでエラーが発生しました: " + error.message,
+        };
+    }
+
+    // NOTE: HighSchoolStudent クラスのテスト
+    try {
+        const hsStudent = new HighSchoolStudent("佐藤花子", 17, 3, "テニス");
+
+        // 継承の確認
+        if (!(hsStudent instanceof Student)) return {
+            ok: false,
+            message: "HighSchoolStudent が Student クラスを継承していません。",
+        };
+
+        // プロパティの確認
+        if (hsStudent.name !== "佐藤花子") return {
+            ok: false,
+            message: "HighSchoolStudent のコンストラクタで name プロパティが正しく設定されていません。",
+        };
+        if (hsStudent.club !== "テニス") return {
+            ok: false,
+            message: "HighSchoolStudent のコンストラクタで club プロパティが正しく設定されていません。",
+        };
+
+        // オーバーライドされた introduce メソッドの確認
+        const intro = hsStudent.introduce();
+        if (!intro.includes("佐藤花子") || !intro.includes("17歳") || !intro.includes("3年生") || !intro.includes("テニス部")) return {
+            ok: false,
+            message: "HighSchoolStudent の introduce メソッドが期待される形式の文字列を返していません。",
+        };
+
+        // 継承されたメソッドの確認
+        hsStudent.addSubject("物理");
+        if (!hsStudent.subjects.includes("物理")) return {
+            ok: false,
+            message: "HighSchoolStudent で継承されたメソッドが正しく動作していません。",
+        };
+
+    } catch (error) {
+        return {
+            ok: false,
+            message: "HighSchoolStudent クラスでエラーが発生しました: " + error.message,
+        };
+    }
+
+    // NOTE: super の使用チェック
+    const hsStudentString = HighSchoolStudent.toString();
+    if (!hsStudentString.includes("super")) return {
+        ok: false,
+        message: "HighSchoolStudent クラスで super キーワードを使用してください。",
+    };
+
+    return {
+        ok: true,
+        message: null
+    };
+
+}}>
+    今回は、オブジェクト指向プログラミングの基本概念を実践してみましょう。
+
+    以下の2つのクラスを定義してください。
+
+    #### `Student` クラス
+    - プロパティ: `name`, `age`, `grade`, `subjects`
+    - コンストラクタ: `name`, `age`, `grade` を引数として受け取り、`subjects` は空の配列で初期化する
+    - メソッド:
+        - `introduce()`: `こんにちは、${name}です。${age}歳で、${grade}年生です。` の形式で自己紹介文を返す
+        - `addSubject(subject)`: 引数として受け取った科目を `subjects` 配列に追加する
+        - `getSubjects()`: `subjects` 配列の要素をカンマとスペースで結合した文字列を返す
+
+    #### `HighSchoolStudent` クラス
+    - `Student` クラスを継承する
+    - 追加プロパティ: `club`
+    - コンストラクタ: `name`, `age`, `grade`, `club` を引数として受け取る
+    - オーバーライドメソッド:
+        - `introduce()`: 親クラスの `introduce()` の結果に、`${club}部に所属しています。` を追加した文字列を返す
+</Assignment>

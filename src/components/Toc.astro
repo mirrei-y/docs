@@ -1,0 +1,71 @@
+---
+import type { MarkdownHeading } from "astro";
+
+interface Props {
+    headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+
+const renderHeadings = (headings: MarkdownHeading[], depth: number): string => {
+    const items = [];
+    for (let i = 0; i < headings.length; i++) {
+        const heading = headings[i];
+        if (heading.depth === depth) {
+            // NOTE: 現在の深さと同じ見出しをリストアイテムとして追加
+            items.push(`<li><a href="#${heading.slug}">${heading.text}</a></li>`);
+
+            if (i + 1 !== headings.length && headings[i + 1].depth > depth) {
+                items.push(renderHeadings(headings.slice(i + 1), depth + 1));
+            }
+        } else if (heading.depth < depth) {
+            // NOTE: 現在の深さより浅い見出しが見つかったら、このレベルのリストは終了
+            break;
+        } else {
+            // NOTE: 現在の深さより深い見出しは、サブリストで処理されるためスキップ
+        }
+    }
+
+    return items.length > 0 ? `<ol>${items.join("")}</ol>` : "";
+};
+---
+
+<nav>
+    <h2>目次</h2>
+    <Fragment
+        set:html={renderHeadings(
+            headings,
+            Math.min(...headings.map((h) => h.depth)),
+        )}
+    />
+</nav>
+
+<style>
+    nav {
+        h2 {
+            font-size: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        ol {
+            counter-reset: item;
+            padding-left: 1em;
+            margin: 0px;
+
+            li {
+                counter-increment: item;
+            }
+            ol {
+                padding-inline-start: 1rem;
+
+                li {
+                    display: block;
+
+                    &:before {
+                        content: counters(item, ".") ". ";
+                    }
+                }
+            }
+        }
+    }
+</style>

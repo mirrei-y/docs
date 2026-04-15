@@ -1,0 +1,10 @@
+name = "mirrei-docs"
+compatibility_date = "2026-02-11"
+
+kv_namespaces = [
+	{ binding = "KV_FEEDBACK", id = "e478e68efd0b46c2b5e17145019d76bb" },
+	{ binding = "KV_WRONG", id = "62265afed4e14c2492b1d65f32b1211c" }
+]
+
+[assets]
+directory = "./dist/"

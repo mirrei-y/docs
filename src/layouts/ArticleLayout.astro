@@ -1,0 +1,442 @@
+---
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import Toc from "../components/Toc.astro";
+import type { MarkdownLayoutProps } from "astro";
+
+type Datetime = `${string}-${string}-${string} ${string}:${string}:${string}`;
+type Props = MarkdownLayoutProps<{
+    title: string;
+    description: string;
+    written_by: string;
+    created_at: Datetime;
+    updated_at: Datetime | null;
+    parent: string | null;
+}>;
+
+const { frontmatter } = Astro.props;
+
+const created_at = frontmatter.created_at ? new Date(frontmatter.created_at) : null;
+created_at?.setTime(created_at.getTime() - 1000 * 3600 * 9);
+const updated_at = frontmatter.updated_at ? new Date(frontmatter.updated_at) : null;
+updated_at?.setTime(updated_at.getTime() - 1000 * 3600 * 9);
+const parent = await (async () => {
+    if (frontmatter.parent) {
+        const pages = import.meta.glob("/src/pages/**/*");
+        const page = pages["/src/pages" + frontmatter.parent + ".mdx"] ?? pages["/src/pages" + frontmatter.parent + "/index.mdx"];
+        const result = await page?.() as any;
+
+        if (result) {
+            return result.frontmatter.title as string;
+        }
+    }
+    return null;
+})();
+
+function getDisplayDatetime(date: Date): string {
+    const d = new Date(date.getTime());
+    d.setTime(d.getTime() + 1000 * 3600 * 9);
+    return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日 ${d.getUTCHours()}時${d.getUTCMinutes().toString().padStart(2, "0")}分`;
+}
+---
+
+<!doctype html>
+<html lang="ja" dir="ltr">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/webp" href="/images/icon.webp" />
+        <meta name="color-scheme" content="dark light" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="copyright" content={`Copyright (C) ${new Date().getFullYear()} Yuiha Mirrei, All rights reserved.`} />
+        <meta name="robots" content="noindex, nofollow">
+
+        <title>{frontmatter.title}</title>
+        <meta property="og:title" content={frontmatter.title} />
+        <meta name="description" content={frontmatter.description} />
+        <meta property="og:description" content={frontmatter.description} />
+        <meta name="author" content={frontmatter.written_by} />
+        { created_at ? <meta name="date" content={created_at.toISOString()} /> : null }
+        { updated_at ? <meta name="revised" content={updated_at.toISOString()} /> : null }
+    </head>
+    <body>
+        <Header />
+        <main>
+            <aside>
+                <h1>{frontmatter.title}</h1>
+
+                {
+                    () =>
+                        frontmatter.parent ? (
+                            <a href={frontmatter.parent}>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="icon icon-tabler icon-tabler-category"
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 22 22"
+                                >
+                                    <path d="M4 4h6v6h-6z" />
+                                    <path d="M14 4h6v6h-6z" />
+                                    <path d="M4 14h6v6h-6z" />
+                                    <path d="M17 17m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                                </svg>
+                                { parent }
+                            </a>
+                        ) : null
+                }
+
+                <div>
+                    {
+                        frontmatter.description
+                            .split("\n")
+                            .map((line: string) => <p>{line}</p>)
+                    }
+                </div>
+
+                <div id="article-data">
+                    {
+                        () =>
+                            created_at ? (
+                                <time datetime={ created_at.toISOString() }>作成日時: { getDisplayDatetime(created_at) }</time>
+                            ) : null
+                    }
+                    {
+                        () =>
+                            updated_at ? (
+                                <time datetime={ updated_at.toISOString() }>更新日時: { getDisplayDatetime(updated_at) }</time>
+                            ) : null
+                    }
+                    {
+                        () =>
+                            frontmatter.written_by ? (
+                                <span>執筆者: {frontmatter.written_by}</span>
+                            ) : null
+                    }
+                </div>
+
+                <Toc headings={Astro.props.headings} />
+            </aside>
+            <article>
+                <slot />
+            </article>
+        </main>
+        <Footer />
+    </body>
+</html>
+
+<style is:global>
+    /* NOTE: 基本スタイリング */
+    :root {
+        font-family: "Noto Sans JP", Inter, system-ui, Avenir, Helvetica, Arial,
+            sans-serif;
+        font-weight: 400;
+
+        color-scheme: dark light;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        -webkit-text-size-adjust: 100%;
+
+        color: rgba(255, 255, 255, 0.87);
+        --background-color: #242424;
+        @media (prefers-color-scheme: light) {
+            color: #131313;
+            --background-color: #ffffff;
+        }
+
+        background-color: var(--background-color);
+    }
+    body {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        margin-block: 3rem;
+
+        max-width: 1000px;
+        margin-inline: auto;
+        padding-inline: 2rem;
+
+        &::before {
+            content: "";
+            display: block;
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            right: 0px;
+            bottom: 0px;
+            mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5 5" width="5" height="5"><path d="M 0,4 4,0 H 5 V 1 L 1,5 H 0 V 4" /><path d="M 0,0 H 1 L 0,1" /><path d="M 5,5 V 4 L 4,5" /></svg>');
+            mask-size: 1rem;
+            background-color: #afacc1;
+            opacity: 0.1;
+            z-index: -1;
+            @media (prefers-color-scheme: dark) {
+                background-color: #6a6095;
+            }
+        }
+    }
+    main {
+        background-color: var(--background-color);
+        padding: 3rem;
+        border-radius: 1rem;
+
+        box-shadow: 0px 0px 20px 0px #40404060;
+    }
+
+    /* NOTE: 文字基本スタイリング */
+    h1, h2, h3, h4, h5, h6 {
+        margin: 0px;
+
+        a {
+            text-decoration: none;
+
+            & > a {
+                text-decoration: underline;
+            }
+        }
+    }
+    p {
+        margin: 0px;
+        white-space: break-spaces;
+    }
+    strong, b {
+        --emphasis-color: #f0e00070;
+        --emphasis-top: 65%;
+        --emphasis-bottom: 90%;
+
+        background-image: linear-gradient(to bottom,
+            transparent var(--emphasis-top),
+            var(--emphasis-color) var(--emphasis-top),
+            var(--emphasis-color) var(--emphasis-bottom),
+            transparent var(--emphasis-bottom));
+
+        @media (prefers-color-scheme: light) {
+            --emphasis-color: #f0e000f0;
+        }
+    }
+    em, i {
+        font-weight: 500;
+    }
+    a {
+        color: currentColor;
+        &:hover {
+            color: #8e8e97;
+            @media (prefers-color-scheme: light) {
+                color: #4c51a5;
+            }
+        }
+    }
+
+    /* NOTE: 挿入系コンテンツ */
+    hr {
+        margin-block: 2em;
+        opacity: 0.25;
+    }
+    pre {
+        padding: 1rem;
+        margin: 1rem 0px;
+
+        background-color: #80808011;
+        border: 1px solid #808080;
+        border-radius: 3px;
+
+        white-space: break-spaces;
+    }
+    code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+            "Liberation Mono", "Courier New", monospace;
+
+        :not(pre) > & {
+            font-size: 0.9em;
+
+            display: inline-block;
+            margin-block: 0.2rem;
+            padding: 0px 0.3rem;
+
+            background-color: #80808033;
+            border: 1px solid #80808033;
+            border-radius: 3px;
+        }
+        pre > & {
+            display: block;
+            width: 100%;
+
+            .line:last-of-type {
+                margin-bottom: 1em;
+            }
+        }
+    }
+    math {
+        font-size: 1.2em;
+
+        &:not([display=block]) mfrac {
+            font-size: 1.3em;
+        }
+    }
+    table {
+        margin-block: 1em;
+
+        th,
+        td {
+            padding-inline: 1em;
+            padding-block: 0.25em;
+        }
+
+        th {
+            background-color: #80808033;
+        }
+        td {
+            background-color: #80808011;
+        }
+    }
+    blockquote {
+        margin: 1em 0px;
+        padding: 0.25em 1em;
+
+        border-left: 6px solid #80808080;
+    }
+
+    /* NOTE: アイコン */
+    svg.icon-tabler {
+        stroke-width: 1.5;
+        stroke: currentColor;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    /* NOTE: フォーム要素 */
+    textarea {
+        font-size: 1em;
+        padding: 0.5em;
+        border: 1px solid #808080;
+        border-radius: 3px;
+    }
+    button {
+        border-radius: 8px;
+        border: 1px solid transparent;
+        padding: 0.6em 1.2em;
+        font-size: 1em;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: border-color 0.25s;
+
+        background-color: #1a1a1a;
+        @media (prefers-color-scheme: light) {
+            background-color: #f9f9f9;
+        }
+
+        &:hover {
+            border-color: #646cff;
+        }
+        &:focus,
+        &:focus-visible {
+            outline: 4px auto -webkit-focus-ring-color;
+        }
+    }
+
+    /* NOTE: 記事本体 */
+    main > aside {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        padding-bottom: 2rem;
+        border-bottom: 1px solid currentColor;
+
+        & > h1 {
+            line-height: 1;
+        }
+        & > a {
+            font-size: 0.9em;
+            opacity: 0.7;
+
+            display: flex;
+            align-items: center;
+            line-height: 1;
+            gap: 0.3em;
+            width: fit-content;
+            svg {
+                width: 1.25em;
+                height: 1.25em;
+            }
+        }
+
+        #article-data {
+            display: flex;
+            flex-direction: column;
+
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+    }
+    main > article {
+        margin-top: 2rem;
+
+        line-height: 1.5;
+
+        code {
+            margin: 0px;
+        }
+
+        h2 {
+            margin-inline: -3rem;
+            padding: 1.5rem 3rem;
+            margin-bottom: 1.5rem;
+            &:not(:first-of-type) {
+                margin-top: 2rem;
+            }
+
+            background: linear-gradient(to right, #6562bd11, #2a60b133),
+                linear-gradient(to right, #1d67d599 1.5rem, #6562bd11 1.5rem);
+        }
+        h3 {
+            margin-inline: -1rem;
+            padding: 0.5rem 1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+
+            background: linear-gradient(to right, #6562bd11, #2a60b133);
+        }
+        h4 {
+            &::before {
+                content: "●";
+                margin-right: 0.5em;
+            }
+
+            font-size: 1.17rem;
+        }
+        h5 {
+            &::before {
+                content: "○";
+                margin-right: 0.5em;
+            }
+
+            font-size: 1rem;
+            margin-top: 2em;
+        }
+        :not(h2, h3) + h4 {
+            margin-top: 1.5rem;
+        }
+        p {
+            margin-block: 1em;
+        }
+    }
+
+    /* NOTE: モバイル対応 */
+    @media (max-width: 30rem) {
+        body {
+            padding: 0px;
+        }
+        main {
+            padding: 2rem;
+            border-radius: 0px;
+        }
+        article h2 {
+            margin-inline: -2rem;
+        }
+        pre {
+            padding: 0.5rem;
+        }
+    }
+</style>

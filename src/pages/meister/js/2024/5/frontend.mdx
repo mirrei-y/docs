@@ -1,0 +1,373 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第5回(フロントエンド) CSSで装飾する・APIを使ってみる
+description: CSSでWebページの見た目をカスタマイズし、APIを使用して情報を取得する方法を学習します。
+written_by: onestep621, Mirrei
+created_at: 2024-05-05 18:42:00
+updated_at: null
+parent: /meister/js/2024/5
+---
+
+import Assignment from "/src/components/Article/Assignment.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Info from "/src/components/Article/Info.astro";
+import Tips from "/src/components/Article/Tips.astro";
+
+## よりリッチなWebページを作る: HTML
+ここまで`document.write()`を使ってHTMLに要素を追加してきましたが、このままだと見た目があまりよくありません。そこで、HTMLタグとCSSを使って装飾を行います。
+
+### `document.write()`の問題点
+第一回で説明しましたが、HTMLは文書の構造を記述するための言語です。今までは`<script>`タグしか使っていませんでしたが、本来は`<h1>`で大見出し、`<p>`で段落を表現するのが正しい使い方です。
+`document.write()`は、文書の末尾に要素を追加することしかできないため、複雑なWebページを作るには向いていません。
+`document.write()`の代わりに、しっかりしたHTML操作で要素を追加することで、よりリッチなWebページを作ることができます。
+
+### きちんとしたHTMLの雛形
+```html
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <title>タイトル</title>
+    <style>
+      /* ここにCSS(後述)のコード */
+    </style>
+  </head>
+  <body>
+    <!-- ここにメインの内容 -->
+    <script>
+      // ここにJavaScriptのコード
+    </script>
+  </body>
+</html>
+```
+`<!DOCTYPE html>`は、「最新のHTMLバージョンを使いますよ」という宣言です。  
+`<html lang="ja">`は、日本語のページであることを示します。文書の一番外側の要素になります。  
+`<html>`の中には`<head>`と`<body>`があり、`<head>`にはページの情報を書きます。`<body>`には実際のページの内容を書きます。  
+`<meta charset="UTF-8">`は、文字コードをUTF-8に設定します。  
+`<title>`はページのタイトルを設定します。  
+`<style>`はCSSを記述するためのタグです。  
+`<script>`はJavaScriptを記述するためのタグです。
+
+### よくあるHTMLタグ
+- `<h1>`〜`<h6>`: 見出し
+- `<p>`: 段落
+- `<a href="リンク先">`: リンク
+- `<img src="画像のURL" alt="画像の説明">`: 画像
+- `<ul>`: 箇条書きリスト
+- `<ol>`: 番号付きリスト
+- `<li>`: リストの要素(`<ul>`や`<ol>`を必ず親要素に持つ) 
+- `<div>`: 特別な意味のないまとまり(子要素をまとめるのに使う)
+
+### `document.write()`の代替
+
+#### まずは要素を取得する
+`document.write()`は、文書の一番の先祖要素にしか要素を追加できません。
+実際には、`<ul>`の中に`<li>`を追加したり、`<div>`の中に`<p>`を追加したりしたいわけですから、`document.write()`は使いにくいです。
+まずHTMLの要素を取得してから、その要素に対して操作を行う必要があります。
+
+- `document.getElementByTagName()`
+```js
+var body = document.getElementsByTagName("body")[0];
+```
+`document.getElementByTagName()`は、HTML要素を取得する方法の一つです。引数には、取得したい要素のタグ名(`<p>`なら`"p"`)を指定します。
+このコードでは、HTML全体の中から`<body>`タグを取得しています。`getElementsByTagName()`は、要素を配列として返すため、`[0]`で最初の要素を取得しています。
+
+:::tips
+bodyを取得したい場合は
+```js
+var body = document.body;
+```
+と書くこともできます。
+:::
+
+- `document.getElementById()`
+```js
+var list = document.getElementById("list");
+```
+`document.getElementById()`は、HTML要素を取得する方法の一つです。引数には、取得したい要素のIDを指定します。
+```html
+<ul id="list"></ul>
+```
+このように、`<ul>`タグに`id="list"`を指定することで、`document.getElementById("list")`で取得できるようになります。
+
+- `document.getElementsByClassName()`
+```js
+var items = document.getElementsByClassName("item");
+```
+`document.getElementsByClassName()`は、HTML要素を取得する方法の一つです。引数には、取得したい要素のクラス名を指定します。
+```html
+<ul>
+  <li class="item">リスト1</li>
+  <li class="item">リスト2</li>
+</ul>
+```
+このように、`<li>`タグに`class="item"`を指定することで、`document.getElementsByClassName("item")`で取得できるようになります。
+idと違い、クラス名は複数の要素に指定できるため、取得した要素は配列として返されます。
+
+- `document.querySelector()`
+```js
+var list = document.querySelector("#list");
+var items = document.querySelectorAll(".item");
+```
+`querySelector()`は、CSSセレクタを使ってHTML要素を取得する関数です。  
+CSSセレクタは、主にCSS(後述)でよく使われる、HTML要素を限定指定するための記法です。`#`はid、`.`はclassを意味します。  
+`".item"`は、クラス名が`item`である要素を取得します。`"#list"`は、idが`list`である要素を取得します。  
+ちなみに、`"#list .item"`は、idが`list`である要素の子孫にあるクラス名が`item`である要素を取得します。  
+`querySelector()`は、最初に見つかった要素を取得します。複数の要素を取得したい場合は、`querySelectorAll()`を使います。  
+
+`querySelector()`と`querySelectorAll()`は、`getElementById()`と`getElementsByClassName()`と`getElementsByTagName()`のすべての機能を兼ねるため非常に強力ですが、あまりたくさん使いすぎると動作が重くなることがあるため、適切に使い分けることが大切です。
+
+CSSセレクタには他にもたくさんの機能があります。詳しくは後述します。
+
+#### 要素を追加する
+要素を取得できたら、その要素に対して操作を行うことができます。
+```js
+var list = document.getElementById("list");
+
+// 方法1: HTML直書きで要素を追加する
+list.innerHTML = "<li>リスト1</li><li>リスト2</li>";
+
+// 方法2: 仮想的に要素を作ってから追加
+var item = document.createElement("li"); // まずは仮想的な要素を作成
+item.textContent = "リスト3"; // 作った要素の中身を設定
+list.appendChild(item); // 仮想的な要素を親要素に追加
+
+// 方法3: insertAdjacentHTML
+list.insertAdjacentHTML("beforeend", "<li>リスト4</li>");
+
+// 要素を変更する
+// NOTE: .childrenはその要素が持つ子要素の配列を取得します
+list.children[0].textContent = "リスト0";
+
+// 要素を削除する
+list.removeChild(list.children[0]);
+```
+HTMLを操作する関数は非常に多く、全て説明することはできないので、ここでは代表的なものを紹介しました。
+もっと高度な操作をしたい場合は"DOM API"などで検索してみてください。(DOMとはDocument Object Modelの略です)
+
+:::Caution
+innerHTMLやinsertAdjacentHTML()は、文字列をそのままHTMLとして追加するため、セキュリティ上のリスクがあります。ユーザーからの入力をそのまま追加する場合は、十分に注意してください。
+
+例えば、ユーザーが文字列を入力して、それを画面に表示するプログラムがあったとします。
+ここで、ユーザーが「`<script>(JavaScriptコード)</script>`」という文字列を入力した場合、そのままHTMLとして追加され、ユーザーの入力したJavaScriptが実行されてしまいます。
+
+これは場合によっては脆弱性になり、このような脆弱性を「XSS(Cross-Site Scripting)」と呼びます。
+
+これを防ぐには「方法2: 仮想的に要素を作ってから追加」の方法を使ってください。
+:::
+
+## CSSで装飾する
+CSSは、Webページの見た目をカスタマイズするための言語です。HTMLに直接スタイルを指定することもできますが、CSSを使うことでスタイルを一括管理することができます。
+CSSの概観
+```
+セレクタ {
+  プロパティ: 値;
+}
+```
+セレクタには、スタイルを適用する要素をCSSセレクタで指定します。プロパティは、スタイルの種類を指定します。値は、プロパティに対する具体的な値を指定します。
+例えば、`red`クラスを持つ要素すべてに赤色の文字を指定する場合、以下のように記述します。
+```css
+.red {
+  color: red;
+}
+```
+このように、CSSはHTMLの要素に対してスタイルを適用するための言語です。
+
+### よく使うCSSセレクタ
+```css
+/* タグ名 */
+h1 {
+  プロパティ: 値;
+}
+
+/* クラス */
+.red {
+  プロパティ: 値;
+}
+
+/* .redかつ.bold */
+.red.bold {
+  プロパティ: 値;
+}
+
+/* id */
+#list {
+  プロパティ: 値;
+}
+
+/* すべて */
+* {
+  プロパティ: 値;
+}
+
+/* ulのなかのli */
+ul li {
+  プロパティ: 値;
+}
+
+/* ulの直下のli */
+ul > li {
+  プロパティ: 値;
+}
+
+/* ulの中の最初のli */
+ul li:first-child {
+  プロパティ: 値;
+}
+```
+CSSセレクタには他にもたくさんの機能があります。詳しくは[MDN Web Docs](https://developer.mozilla.org/ja/docs/Web/CSS)などで調べてみてください。
+:::tips  
+CSSセレクタには**詳細度**という概念があります。
+同じ要素に、矛盾するような別のCSSがかけられた場合、詳細度が高いセレクタのスタイルが適用されます。
+詳細度が同じ場合は、後に書かれたスタイルが適用されます。`!important`をつけることで、そのスタイルが優先されるようにできますが、できるだけ使わないように頑張ってください。  
+セレクタ全体を`:which()`で囲むことで、詳細度を0にできるため、あとから上書きしたいスタイルに使うと便利です。  
+https://zenn.dev/yend724/articles/20221218-pgvxke7xs8svn4nn
+:::
+
+### CSSのプロパティ
+CSSにはたくさんのプロパティがありますが、ここでは代表的なものを紹介します。
+```css
+.selector {
+  /* テキスト関連 */
+  color: 色;
+  font-size: サイズ;
+  font-weight: 太さ;
+  text-align: 中央揃え;
+
+  /* 背景関連 */
+  background-color: 色;
+  background-image: url(画像のURL);
+
+  /* ボーダー */
+  border: 太さ 種類 色;
+
+  /* レイアウト(インライン要素(後述)では使えません) */
+  width: 幅;
+  height: 高さ;
+  /* 外側の余白 */
+  margin: 上 右 下 左;
+  /* 内側の余白 */
+  padding: 上 右 下 左;
+}
+```
+
+### `display`プロパティ
+`display`プロパティは、CSSの中でも特に重要であり特殊なプロパティです。
+要素の表示方法を指定します。
+```css
+.selector {
+  display: block; /* ブロック要素 */
+  display: inline; /* インライン要素 */
+  display: inline-block; /* インラインブロック要素 */
+  display: none; /* 非表示 */
+
+  display: flex; /* 伝家の宝刀 */
+  display: inline-flex; /* インライン伝家の宝刀 */
+}
+```
+`div`や`p`などの要素はデフォルトで`display: block;`になっています。
+`span`などの要素はデフォルトで`display: inline;`になっています。
+`display: block;`は、要素をブロック要素として表示します。ブロック要素は、横幅や高さを指定できるため、レイアウトを自由に設定できます。
+`display: inline;`は、要素をインライン要素として表示します。テキストに対してスタイルを適用する場合などに使います。
+`display: inline-block;`は、ブロック要素とインライン要素の中間の性質を持ちます。ブロック要素のように横幅や高さを指定できるため、レイアウトを自由に設定できますが、インライン要素のように横並びになります。
+
+`display: flex;`は、要素のレイアウトを柔軟に設定するための`display`値です。
+`display: flex;`を指定すると、その要素の子要素は`flex`レイアウトになります。
+`flex`レイアウトでは、以下の便利なプロパティが使えます。
+- `flex-direction`: 子要素の並び方を指定します。`row`は横並び、`column`は縦並びです。
+- `justify-content`: 子要素の横方向の配置を指定します。`flex-start`は左寄せ、`center`は中央寄せ、`flex-end`は右寄せです。
+- `align-items`: 子要素の縦方向の配置を指定します。`flex-start`は上寄せ、`center`は中央寄せ、`flex-end`は下寄せです。
+- `flex-wrap`: 子要素が横並びの場合、折り返すかどうかを指定します。`nowrap`は折り返さず、`wrap`は折り返します。
+`inline-flex`は、`flex`と同じですが、インライン要素のように横並びになります。
+上下中央揃えなど、高度なレイアウトをしたい場合は`flex`を使うと便利です。
+
+## API を使う
+実際に作品を作る際は、外部のサービスからデータを取りたい場合があると思います。すべてのデータが得られるとは限らないのですが、場合によってはデータのとり方が公開されていることがあります。
+
+プログラムが外部のプログラムにデータを要求したり、処理を要求したりする仕組みのことを、API (Application Programming Interface) といいます。
+これは、その中でも Web API と呼ばれるものです。
+
+<CaptionImage src="/attachments/meister/js/2024/5/frontend/web-api.webp" caption="CodeZine による、Web API の説明図。" cite="https://codezine.jp/article/detail/7169" />
+
+### 天気予報のデータにアクセスしてみる
+試しに、https://weather.tsukumijima.net/ で公開されている天気予報APIを使ってみましょう。
+APIの説明を読むと、天気予報データを得るには`https://weather.tsukumijima.net/api/forecast/city/地域ID`にアクセスすればいいと書いてあります。
+
+JavaScript では、外部サイトにアクセスするために `fetch` 関数を使用します。
+`fetch` 関数は、まず戻り値を `then` 関数で受け取り、オブジェクトに変換する前処理をしてから再度 `then` 関数で変換後のオブジェクトを受け取ります。
+
+この処理を記述すると、以下のようになります。
+
+```js
+fetch("https://weather.tsukumijima.net/api/forecast/city/130010").then(r => r.json()).then(obj => {
+    // ... ここに処理を記述 ...
+});
+```
+
+<Tips>
+今「アロー関数が多すぎて読みにくいな」って思いましたね？
+
+次回の第6回では、これを解決する非同期処理について学習します。
+</Tips>
+
+`obj` には、API の仕様で公開されているレスポンスフィールドが含まれています。
+
+<CaptionImage src="/attachments/meister/js/2024/5/frontend/forecast-api-response.webp" caption="weather.tsukumijima.net の API レスポンスフィールド。" />
+
+例えば、レスポンスフィールド中の `publicTime` を取得したい場合、上記コードの `obj` を使用して取得できます。
+
+```js
+fetch("https://weather.tsukumijima.net/api/forecast/city/130010").then(r => r.json()).then(obj => {
+    document.write(obj.publicTime);
+});
+```
+
+ほかにも、URL を変えたり、出力するレスポンスフィールドの内容を変えたりしてみましょう。
+
+<Tips>
+レスポンスフィールドには、ネストされたオブジェクトや、配列などが含まれますが、これは[第4回](/meister/js/2024/4)などで解説されています。
+</Tips>
+
+### HTML を fetch で取得する
+
+> API を呼び出す際の `fetch` 関数は、まず戻り値を `then` 関数で受け取り、オブジェクトに変換する前処理をしてから再度 `then` 関数で変換後のオブジェクトを受け取ります。
+
+と書きましたが、「オブジェクトに変換する前処理」は、別の前処理もあります。
+例えば、文字列に変換する前処理もあります。
+
+これを使用すると、`fetch` で取得した内容をテキストで受け取ることができます。
+`fetch` に指定する URL を HTML にすれば、 HTML ソースを JavaScript で取得することができます。
+
+```js
+fetch("https://docs.mirrei.dev/meister/js/2024/5/frontend").then(r => r.text()).then(text => {
+    document.write(text);
+});
+```
+
+違いは、`r.json()` が `r.text()` になっていることです。
+`obj` が `text` になっているのは、アロー関数の引数を変更しただけなので、ここでは重要ではありません。
+
+このコードを実行すると、このページが表示されます。
+このページの HTML ソースをそのままそっくり画面に表示しているためです。
+
+<Info>
+このコードは、CORS と呼ばれるセキュリティの仕組み上、すべての URL で動作するわけではありません。
+
+このページに限り、特別に CORS を用いて許可しているので、このページ以外でのこの動作は保証しません。
+</Info>
+
+<Info>
+2025年4月追記: このページの CORS を用いた許可は廃止されました。
+このページを取得しようとしても、CORS のエラーにより取得できない可能性があります。ご了承ください。
+</Info>
+
+## 課題
+
+<Assignment regulation='[["\\.textContent *= *", "textContent を使用して出力する"], ["\\.telop", "今日の天気を h1 タグに出力する"], ["\\.description\\.text", "天気についての説明を p タグに出力する"], ["color: *gray", "文字色を灰色に変更する"]]'>
+* 出力には、要素の `textContent` プロパティを編集する方法を使用すること
+* HTML には、h1 タグと p タグを使用すること
+* 天気は、東京の天気を使用すること（地域IDは `130010` です）
+* 今日の天気（forecasts の適当な要素の telop を使用する）を h1 タグに出力すること
+* 天気についての説明（description.text を使用する）を p タグに出力すること
+* p タグは、文字色を灰色（gray を使用する）に変更すること
+</Assignment>

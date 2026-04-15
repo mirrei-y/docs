@@ -1,0 +1,803 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第3回 関数
+description: 関数とその引数、戻り値や型変換を学習します。
+written_by: Mirrei
+created_at: 2025-06-09 23:29:28
+updated_at: null
+parent: /meister/js/2025
+---
+
+import Info from "/src/components/Article/Info.astro";
+import Tips from "/src/components/Article/Tips.astro";
+import Hint from "/src/components/Article/Hint.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import InlineImages from "/src/components/Article/InlineImages.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Assignment from "/src/components/Article/Assignment.astro";
+
+## 関数
+**関数**とは、数学で扱われる関数と同じように、「何かの値を入れると、何かの値が返ってくる」、データの変換を行う箱のような概念です。「写像」とも似ています。
+
+命令の集合体であるプログラミングにおいては、入力する値を指定しない、あるいは出力された値を使用しないこともできます。
+つまり、関数は**ある程度再利用する処理をまとめたもの**、と言うこともできます。
+
+### 構文
+関数は、以下のように定義します。
+
+```js
+function 関数名() {
+    文;
+    文;
+    文;
+}
+```
+
+関数は、以下のように**呼び出す**ことができます。
+
+```js
+関数名();
+```
+
+上記の例は[式文](1#式と文)です。
+
+関数の呼び出しは、式として扱われるため、他の式の中に埋め込むことができます。
+これは、関数が後ほど説明する**戻り値**を返すことができるためです。
+
+#### 使用例
+例えば、以下の処理を考えてみましょう。
+
+- 1回目
+    - 音を鳴らす
+    - 1秒待つ
+- 1秒待つ
+- 2回目
+    - 音を鳴らす
+    - 1秒待つ
+    - 音を鳴らす
+    - 1秒待つ
+- 2秒待つ
+- 3回目
+    - 音を鳴らす
+    - 1秒待つ
+    - 音を鳴らす
+    - 1秒待つ
+    - 音を鳴らす
+    - 1秒待つ
+- 3秒待つ
+- ...以後無限に続く
+
+要は、現在のループ回数に応じた回数音を鳴らし、「現在のループ回数×秒」待つ、を繰り返す処理です。
+
+コードに書き起こすと、このようになります。
+
+```js
+// NOTE: PC から音を鳴らす関数 playSound と、1 秒待機する関数 wait があると仮定します
+
+let i = 0;
+while (true) {
+    i++;
+
+    for (let s = 0; s < i; s++) {
+        playSound();
+        wait();
+    }
+    for (let s = 0; s < i; s++) {
+        wait();
+    }
+}
+```
+
+ここでは、2重[for](2#for-文)ループを使用して、「ループ2回目の中で、2回のループを行う」処理を実装しています。
+
+後者のループでは、*よく読めば* wait 関数の呼ばれる回数が、ループ回数ごとに増えていることがわかります。
+しかし、「よく読めばわかる」ということは、「一目見ただけではわかりにくい」ということでもあります。
+
+これを解決するために、**引数**を使用するアプローチがあります。
+
+### 引数
+関数は、定義を行う際に受け取りたい値（**引数**）を格納する変数名を指定することで、その引数を受け取る（**引数を持つ**）ことができます。
+
+```js
+function waitForSeconds(seconds) {
+    for (let i = 0; i < seconds; i++) {
+        wait();
+    }
+}
+```
+
+このように、関数定義の `()` 内に `seconds` という名前を指定すると、関数内で変数 `seconds` が利用できます。
+
+これは、以下のように呼び出すことができます。
+
+```js
+waitForSeconds(3);
+```
+
+3 秒待つというコードを、わざわざ 3 回書く、あるいは for 文を使用して書く必要がなくなり、読みやすいコードになりました。
+
+引数は、数値型である必要はありません。
+文字列型など、JavaScript で扱える値なら何でも引数として与えることができます。
+
+関数は、読みやすく命名することも重要です。
+今回の場合では、任意の数値を受け取り、指定された秒数待機するという関数であるため、`waitForSeconds` という命名を行いました。
+
+#### 複数の引数
+引数は、複数渡すこともできます。
+
+引数は、受け取る方、渡す方共にカンマで区切って渡します。
+
+```js
+// 指定した分・秒で待つ waitFor 関数を作ってみる
+function waitFor(minutes, seconds) {
+    waitForSeconds(minutes * 60 + seconds);
+}
+
+waitFor(1, 10); // 1 分 10 秒
+```
+
+#### 任意の引数
+また、先ほど示した新しい `waitFor` 関数では、`minutes` 引数を指定しなくてはなりませんでしたが、これを**任意化**することもできます。
+
+任意化するには、引数に対してデフォルトの値を設定します。
+変数に代入するときに似ている記法で記述できます。
+
+```js
+// minutes = 0 と書くことで、指定しない場合 minutes は 0 にすることができる
+function waitFor(seconds, minutes = 0) {
+    waitForSeconds(minutes * 60 + seconds);
+}
+
+waitFor(10); // 10 秒
+waitFor(100); // 100 秒
+waitFor(0, 1); // 1 分
+waitFor(100, 100); // 100 分 100 秒
+```
+
+……実はここまでで、1秒待機するという機能を持つ `wait` 関数だけを用いて、指定された秒数待機する `waitForSeconds`、分と秒もしくは秒を指定して待機する `waitFor` 関数を作ることができました。
+
+関数を使用すると、このようにどんどん拡張して便利な仕組みを作り、使うことができます。
+
+### 戻り値
+また、関数は、実行結果として何かしらの値を返すことができます。
+これを、**戻り値**といいます。
+
+今までがその例ですが、値を返さないこともできます。
+
+複数の戻り値を返すことはできません。
+ただし、配列 `[1, 2, 3, 4]` を返したり、後の講義で解説する「オブジェクト」を使用して、疑似的に複数の値を返すこともできます。
+
+<Tips>
+値を返さない場合、`undefined` が返されたことと同義になります。`undefined` は、第1回で「[型の種類](1#型の種類)」として少しだけ登場しています。
+
+`undefined` は、値がないことを示す特殊な値です。
+後に学習するオブジェクトなどでも、存在しない値を参照しようとした際に `undefined` が返ってきます。
+</Tips>
+
+関数が値を返すには、`return` 文を使用します。
+
+```js
+// NOTE: 与えられた引数 value が偶数であれば true, 奇数であれば false を返す関数
+function isEven(value) {
+    return value % 2 === 0;
+}
+```
+
+`return` 文には式を指定します。
+`0` などの固定値や、`value + 1` などを代入できるということです。
+
+<Hint>
+以前から扱ってきましたが、`value` と `2` は式です。
+
+それらを算術演算子 `%` を使用し、剰余（割り算のあまり）を計算する式 `value % 2` を構成しています。
+
+また、その結果を比較する演算子 `===` を使用し、`0` と比較する式 `value % 2 === 0` を使用しています。
+</Hint>
+
+`return` 文は、その文が呼び出された時点で関数の処理を終えます。
+*本来このようなコーディングはするべきではありません*が、先ほどの偶数かどうかを判定する関数 `isEven` を [if 文](2#条件分岐) で記述してみると、以下のようになります。
+
+```js
+function isEvenEvil(value) {
+    if (value === 0) return true;
+    if (value === 1) return false;
+    if (value === 2) return true;
+    if (value === 3) return false;
+    if (value === 4) return true;
+    if (value === 5) return false;
+    if (value === 6) return true;
+    if (value === 7) return false;
+    if (value === 8) return true;
+    if (value === 9) return false;
+    // ... さらに続く
+}
+```
+
+<Hint>
+なぜ、本来このようなコーディングをするべきでないのか考えてみましょう。
+</Hint>
+
+if 文の性質を思い出してください。
+このプログラムで使用されているのは、else if 文ではなく if 文なので、if 文の内容が終了次第、次の処理に移動するはずです。
+
+しかしこの `isEvenEvil` 関数では、if 文の内容が 1 行の `return` 文のみで完結しています。
+
+`return` 文が実行された時点で、関数自体が終了します。そのため、else if 文を使用しなくとも、*実質的に* else if 文のような挙動を示しているのです。
+
+<Caution>
+あくまで、`return` 文の仕様による処理の流れによりそのような挙動を示すだけであり、if 文が else if 文になっている、という考え方をするべきではありません。
+</Caution>
+
+---
+
+先ほど呼び出しを説明する際に、関数呼び出しは式として扱えると説明しました。
+よって、変数に代入したり、演算子の項として使用したりできます。具体的には、以下のようなことが可能です。
+
+例の定義として、以下のようなものを用います。
+このコードは疑似的なコードです。
+
+```js
+function playSound() {
+    効果音を再生する;
+    if (効果音を再生できたか) {
+        return true;
+    } else {
+        return false;
+    }
+}
+function alert(メッセージ) {
+    メッセージを出力する;
+}
+```
+
+これを使って、以下のようなコードを書けます。
+
+```js
+// playSound の戻り値を変数に入れる
+let isPlayed = playSound();
+if (isPlayed) {
+    alert("再生しました");
+} else {
+    alert("エラー: 効果音が再生できませんでした");
+}
+
+// もっと短くすれば:
+alert(playSound() ? "再生しました" : "エラー: 効果音が再生できませんでした");
+```
+
+<Hint>
+`?` と `:` は[三項演算子](2#三項演算子)です。
+
+ここにおいては、極限まで短くするために使用しました。
+すべての場合で三項演算子を使用しなければいけないわけではありません。
+コードが複雑になるかどうかで考えるべきです。
+</Hint>
+
+---
+
+また、戻り値は[ブーリアン型](1#ブーリアン型)である必要はありません。
+
+数値型や文字列型など、何でも戻り値にすることができます。
+
+```js
+function addTen(value) {
+    return value + 10;
+}
+let thirty = 10 + addTen(10);
+```
+
+---
+
+第1回、第2回と異なり、だいぶプログラミングらしくなってきました。
+ここから、このような**概念の抽象化**が増えてきます。
+
+### 戻り値を引数として使う
+
+プログラミングにおける関数も、数学の関数と似ています。
+
+<math><mi>&theta;</mi><mo>=</mo><mfrac><mn>&pi;</mn><mn>3</mn></mfrac></math> において三角関数 <math><mi>sin</mi></math> を*使用する*とき、以下のような式になり、<math><mi>&theta;</mi></math> は <math><mi>sin</mi></math> 関数の引数と呼ばれます。
+
+<math display="block">
+    <mrow>
+        <mi>sin</mi>
+        <mo>(</mo>
+        <mi>&theta;</mi>
+        <mo>)</mo>
+        <mo>=</mo>
+    </mrow>
+    <mfrac>
+        <msqrt><mn>3</mn></msqrt>
+        <mn>2</mn>
+    </mfrac>
+</math>
+
+
+また数学では、その結果を連結し、別の関数に代入することができます。
+
+<math display="block">
+    <mrow>
+        <msub>
+            <mi>log</mi>
+            <mi>e</mi>
+        </msub>
+        <mo>(</mo>
+        <mi>sin</mi>
+        <mo>(</mo>
+        <mi>&theta;</mi>
+        <mo>)</mo>
+        <mo>)</mo>
+        <mo>&#x2248;</mo>
+    </mrow>
+    <mn>-0.143841...</mn>
+</math>
+
+---
+
+
+これは、プログラミングで言う引数と戻り値を利用した結果であり、プログラミングでも同様のことができます。
+
+```js
+// 関数 sin, log と定数 PI が定義されているものとします
+
+const theta = PI / 3;
+let result = log(sin(theta));
+result // -0.143841... くらい
+```
+
+前述したように `sin(PI / 3)` 自体が式である、ということもできます。
+
+## 無名関数
+先ほど、関数の引数には、JavaScript で渡せる値なら何でも渡せると述べました。
+それは、関数自体も含まれます。
+
+```js
+function playSound() {
+    効果音を再生する;
+}
+function doThreeTimes(fn) {
+    for (let i = 0; i < 3; i++) fn();
+}
+
+doThreeTimes(playSound);
+```
+
+このコードでは、`doThreeTimes` が引数として関数を受け取るようになっています。
+
+実際に使用する際に `playSound` 関数を指定し、`doThreeTimes` 内で `playSound` 関数を実行（`fn();` という記述があります）しています。
+
+---
+
+では、`playSound` 関数に再生できる音のファイル名を指定できるようになった（＝引数を必要とするようになった）とします。
+
+以下のようなコードで実装できるでしょうか。
+
+```js
+function playSound(fileName) {
+    fileName を再生する;
+}
+function doThreeTimes(fn) {
+    for (let i = 0; i < 3; i++) fn();
+}
+
+doThreeTimes(playSound("sounds/levelup.mp3"));
+```
+
+**答えは、否です**。
+`playSound` 関数の戻り値が、`doThreeTimes` 関数の引数として渡される、という挙動になります。
+
+<Hint>
+わからない場合は、この問題を単純化してみましょう。
+今のコードは、本質的には以下のようなものになります。
+
+```js
+fn1(fn2(...));
+```
+
+これでは、先ほど説明した「戻り値を引数として使っている」状態になります。
+</Hint>
+
+### function キーワードの無名関数
+この問題を解決するためには、**無名関数**を作成するというアプローチがあります。
+
+無名関数は、その名の通り*定義の時点では*名前が付けられていない関数です。
+
+今までの関数定義では、`function playSound()` のように名前を付けて（`playSound`）いました。
+無名関数は、その定義自体では名前を付けず、以下のように記述します。
+
+```js
+// 基本的な構文
+function() {
+    何かの処理;
+}
+
+// もちろん、引数も付けられるし、戻り値を返すこともできる
+function(value) {
+    return value + 1;
+}
+```
+
+代わりに、別の場所で名前を付けることで関数を実際に使用することができます。
+
+<Tips>
+実は、名前を付けなくとも無名関数は実行できます。
+括弧 `()` で無名関数を囲い、それを実行するという手段です。
+
+```js
+(function() {
+    playSound("sounds/levelup.mp3");
+})();
+```
+</Tips>
+
+#### 関数の引数に渡す
+```js
+doThreeTimes(function() {
+    playSound("sounds/levelup.mp3");
+});
+```
+
+ここで、`doThreeTimes` では引数に `fn` を受け取り、`fn` を呼び出しています。
+そのため、この無名関数は、`doThreeTimes` の中では `fn` として呼び出せるようになっています。
+
+#### 変数に代入する
+また、無名関数は引数に代入して実行できたように、変数に代入して実行することもできます。
+
+```js
+const playLevelupSound = function() {
+    playSound("sounds/levelup.mp3");
+};
+
+playLevelupSound();
+```
+
+この場合も、`playLevelupSound` は関数と同様に扱えます。
+別の関数の引数に指定することも、もちろん可能です。
+
+```js
+const playLevelupSound = function() {
+    playSound("sounds/levelup.mp3");
+};
+
+doThreeTimes(playLevelupSound);
+```
+
+### アロー関数
+また、**アロー関数**を用いるアプローチもあります。
+
+アロー関数は、function キーワードと同様に無名関数を定義するもう一つの方法です。
+アロー関数は、以下のように定義します。
+
+```js
+// 基本的な構文
+() => {
+    何かの処理;
+}
+
+// もちろん、引数も付けられるし、戻り値を返すこともできる
+(value) => {
+    return value + 1;
+}
+```
+
+また、アロー関数は以下のような省略ができます。
+
+#### 単一引数の場合の括弧の省略
+
+```js
+(value) => {
+    return value + 1;
+}
+```
+
+```js
+value => {
+    return value + 1;
+}
+```
+
+<Caution>
+複数の引数を持つ場合は、括弧を省略することはできません。
+
+```js
+(value1, value2) => { ... }; // OK
+value1, value2 => { ... }; // NG。「value1, アロー関数」として解釈される
+```
+</Caution>
+
+#### 内容が return 文のみの場合のブロックの省略
+
+```js
+(value) => {
+    return value + 1;
+}
+```
+
+```js
+(value) => value + 1;
+```
+
+もちろん、前者の「単一引数の場合の括弧の省略」と合わせることもできます。
+
+<Tips>
+**【上級者向け: this】**
+
+無名関数の定義には、アロー関数と function キーワードによる二つの方法があることを説明しました。
+これらには、実は説明していない違いがあります。
+
+function キーワードでは、this が新しく作成されます。
+これは、以下のようにプロトタイプベースのクラス宣言を行う際に使用されていました。
+
+```js
+ExampleClass = function() {
+    this.counter = 0;
+}
+ExampleClass.prototype.add = function() {
+    this.counter++;
+}
+```
+
+ここでは、this は ExampleClass 自体を指しています。
+しかし ES2015 で、クラス宣言の糖衣構文が導入されたことによって、上記の記法はほぼ利用されなくなりました。
+
+同じ ES2015 で導入されたアロー関数では、上記の理由により、function キーワードでの無名関数宣言であった this をわざわざサポートする必要がありません。
+そのため、アロー関数では新しい this が作成されず、そのスコープにおける this を参照します。
+
+```js
+(function () {
+    this // Function 型
+})
+(() => {
+    this // undefined 型。ランタイムにより、時々 global 変数や Window 型だったりすることもある
+})
+
+// ES2015 で導入されたクラス宣言の糖衣構文
+class ExampleClass {
+    constructor() {
+        this // ExampleClass 型
+
+        (function () {
+            this // Function 型
+        })
+        (() => {
+            this // ExampleClass 型
+        })
+    }
+}
+```
+</Tips>
+
+## 標準関数
+ここからは、標準で用意された関数について紹介します。
+
+### parseInt
+`parseInt` は、与えられた文字列を整数値に変換します。
+
+小数点以下は切り捨てられます。
+
+```js
+parseInt("123") === 123
+parseInt("-123.456") === -123
+parseInt("") === NaN
+parseInt("Hello!") === NaN
+```
+
+数値に変換できない文字列を渡された際には、`NaN` という型の特別な値を返します。
+これを検出するには、後述する `isNaN` 関数を使用します。
+
+### parseFloat
+`parseFloat` は、与えられた文字列を実数値に変換します。
+「実数値」なので、`parseInt` とは異なり、小数点を含む値に変換されることも、整数値に変換されることもあります。
+
+```js
+parseFloat("123") === 123
+parseFloat("-123.456") === -123.456
+parseFloat("") === NaN
+parseFloat("Hello!") === NaN
+```
+
+### isNaN
+与えられた値が `NaN` であるかどうかを確認し、ブーリアン型を返します。
+
+```js
+isNaN(100) === false
+isNaN(parseInt("Hello!")) === true
+```
+
+### Number
+厳密には関数ではありませんが、関数として使用できるものに `Number` があります。
+
+これは渡された値を `parseFloat` と同様、実数値に変換します。
+
+```js
+Number("123") === 123
+Number("-123.456") === -123.456
+Number("") === 0
+Number("Hello!") === NaN
+```
+
+ただし、空文字列（`""`）を渡したときは、`parseInt` や `parseFloat` と挙動が異なり、`0` を返します。
+
+### Boolean
+また同様に、ブーリアン型に変換する `Boolean` もあります。
+
+```js
+Boolean("") === false
+Boolean("true") === true
+Boolean("false") === true
+Boolean("yes") === true
+Boolean("no") === true
+Boolean("Hello!") === true
+```
+
+こちらは、空文字列（`""`）以外はすべて `true` を返します。
+
+### String
+文字列型に変換する `String` というものもあります。
+
+```js
+String(true) === "true"
+String(false) === "false"
+String(0) === "0"
+String(-123.456) === "-123.456"
+String("abcdefg") === "abcdefg"
+String(NaN) === "NaN"
+String([1,-2,"3",4,NaN]) === "1,-2,3,4,NaN"
+```
+
+引数に何も渡さなければ、空文字列（`""`）が返されます。
+
+```js
+String() === ""
+```
+
+## 明示的な型変換
+以上に示す標準関数によって、第1回で述べたように、より型安全なプログラムをコード上で理解できる形で実現してみましょう。
+
+以下の関数は、与えられた値に対して 10 を足して返す関数です。
+与えられた値が不正な場合は、[値が存在しないことを示す `null`](1#型の種類) を返します。
+
+```js
+function addTen(value) {
+    let num = Number(value);
+
+    if (isNaN(num)) return null;
+
+    return num + 10;
+}
+
+// 参考: 以前示した、型安全でない addTen 関数
+function addTenUnsafe(value) {
+    return value + 10;
+}
+```
+
+`Number` 関数を使用することによって、文字列が入力された場合でも数値に変換を行い、加算処理を行うようにしています。
+
+また、`NaN` が出力されるような、非数値文字列が渡された際も、`isNaN` で検知するようにしています。
+
+```js
+addTen(1) === 11
+addTen(-5) === 5
+addTen("123.456") === 133.456
+addTen("Hello!") === null
+```
+
+## 課題
+{/*
+function mul(a, b) {
+    return a * b;
+}
+function div(a, b) {
+    if (b === 0) return null;
+
+    return a / b;
+}
+function pow(base, exponent) {
+    if (exponent < 0) return null;
+    if (exponent === 0) return 1;
+
+    let result = 1;
+    for (let i = 0; i < exponent; i++) {
+        result = mul(result, base);
+    }
+    return result;
+}
+*/}
+<Assignment asserter={() => {
+    // NOTE: 関数存在チェック
+    if (typeof mul !== "function") return {
+        ok: false,
+        message: "関数 mul が定義されていません。",
+    };
+    if (typeof div !== "function") return {
+        ok: false,
+        message: "関数 div が定義されていません。",
+    };
+    if (typeof pow !== "function") return {
+        ok: false,
+        message: "関数 pow が定義されていません。",
+    };
+
+    // NOTE: mul 関数のテスト
+    if (mul(2, 3) !== 6) return {
+        ok: false,
+        message: "mul(2, 3) の結果が正しくありません。期待値: 6, 実際値: " + mul(2, 3),
+    };
+    if (mul(-2, 3) !== -6) return {
+        ok: false,
+        message: "mul(-2, 3) の結果が正しくありません。期待値: -6, 実際値: " + mul(-2, 3),
+    };
+    if (mul(5, 0) !== 0) return {
+        ok: false,
+        message: "mul(5, 0) の結果が正しくありません。期待値: 0, 実際値: " + mul(5, 0),
+    };
+
+    // NOTE: div 関数のテスト
+    if (div(6, 3) !== 2) return {
+        ok: false,
+        message: "div(6, 3) の結果が正しくありません。期待値: 2, 実際値: " + div(6, 3),
+    };
+    if (div(5, 2) !== 2.5) return {
+        ok: false,
+        message: "div(5, 2) の結果が正しくありません。期待値: 2.5, 実際値: " + div(5, 2),
+    };
+    if (div(5, 0) !== null) return {
+        ok: false,
+        message: "div(5, 0) の結果が正しくありません。0 除算の場合は null を返すようにしてください。実際値: " + div(5, 0),
+    };
+
+    // NOTE: pow 関数のテスト
+    if (pow(2, 3) !== 8) return {
+        ok: false,
+        message: "pow(2, 3) の結果が正しくありません。期待値: 8, 実際値: " + pow(2, 3),
+    };
+    if (pow(5, 0) !== 1) return {
+        ok: false,
+        message: "pow(5, 0) の結果が正しくありません。期待値: 1, 実際値: " + pow(5, 0),
+    };
+    if (pow(3, 1) !== 3) return {
+        ok: false,
+        message: "pow(3, 1) の結果が正しくありません。期待値: 3, 実際値: " + pow(3, 1),
+    };
+    if (pow(5, -3) !== null) return {
+        ok: false,
+        message: "pow(5, -3) の結果が正しくありません。期待値: null, 実際値: " + pow(5, -3),
+    };
+
+    // NOTE: pow 関数内での mul 関数の使用チェック
+    const powString = pow.toString();
+    if (powString.includes("**")) return {
+        ok: false,
+        message: "pow 関数内では算術演算子でなく mul 関数を使用してください。",
+    };
+    if (!powString.includes("mul(")) return {
+        ok: false,
+        message: "pow 関数内で mul 関数を使用してください。",
+    };
+
+
+    return {
+        ok: true,
+        message: null
+    };
+
+}}>
+    今回は、関数を使って基本的な算術演算を実装してみましょう。
+
+    以下の3つの関数を定義してください。
+
+    #### `mul(a, b)`
+    - 引数 `a` と `b` を掛け合わせた結果を返します。
+    #### `div(a, b)`
+    - 引数 `a` を `b` で割った結果を返します。
+    - 0 除算が行われてしまう場合は `null` を返します。
+    #### `pow(base, exponent)`
+    - `base` の `exponent` 乗を計算した結果を返します。
+    - この関数は、内部で `mul` 関数を使用して実装してください。
+    - `exponent` が `0` の場合は `1` を返します。
+    - `exponent` が負の数である場合は `null` を返します。
+
+    <Tips>
+    `pow` 関数を実装する際は、繰り返し処理と `mul` 関数をうまく組み合わせることで実装できます。
+    </Tips>
+</Assignment>

@@ -1,0 +1,53 @@
+<div id="counter">
+    <button id="decrement10" type="button">-10</button>
+    <button id="decrement" type="button">-</button>
+    <span>0</span>
+    <button id="increment" type="button">+</button>
+    <button id="increment10" type="button">+10</button>
+    <button id="reset" type="button">リセット</button>
+</div>
+
+<style is:global>
+    #counter {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        span {
+            width: 2em;
+
+            line-height: 1;
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        button {
+            border: 1px solid currentColor;
+        }
+    }
+</style>
+
+<script>
+    let count = 0;
+    const countEl = document.querySelector("#counter span")!;
+    document.querySelector("#increment")!.addEventListener("click", () => {
+        count++;
+        countEl.textContent = count.toString();
+    });
+    document.querySelector("#decrement")!.addEventListener("click", () => {
+        count--;
+        countEl.textContent = count.toString();
+    });
+    document.querySelector("#increment10")!.addEventListener("click", () => {
+        count += 10;
+        countEl.textContent = count.toString();
+    });
+    document.querySelector("#decrement10")!.addEventListener("click", () => {
+        count -= 10;
+        countEl.textContent = count.toString();
+    });
+    document.querySelector("#reset")!.addEventListener("click", () => {
+        count = 0;
+        countEl.textContent = count.toString();
+    });
+</script>

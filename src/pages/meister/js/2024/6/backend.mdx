@@ -1,0 +1,211 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第6回(バックエンド) 実践！Web APIを実装する
+description: API を自分で実装し、サーバーから非同期でデータを取得するアプリケーションサーバーを実装することを目標にします。
+written_by: Mirrei
+created_at: 2024-07-01 08:11:00
+updated_at: null
+parent: /meister/js/2024/6
+---
+
+import Assignment from "/src/components/Article/Assignment.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Tips from "/src/components/Article/Tips.astro";
+
+## 実装するもの
+
+今回の目標は、Web アプリケーションを自分で作成し、組み合わせられるようなプログラムを作成することです。
+具体的には、ページを再読み込みしても値がリセットされない、カウンタを作成してみることにします。
+
+### カウンタとは
+
+カウンタとは、この講義では「`+` と `-` のボタンがあり、押すことで画面上に表示された値が 1 加算・減算されるもの」とします。
+
+### 注意点
+
+今回はバックエンドとフロントエンドの連結は行いません。
+バックエンドコースの講義にはサンプル HTML が付属していますが、このフロントエンドコースで作成した HTML を使用して、完全にオリジナルの Web アプリケーションを作成することもできます。
+フロントエンドコースの講義で開発したプログラムを使用して、完全にオリジナルの Web アプリケーションを作成することもできます。
+
+## 設計
+
+今回は「ページを再読み込みしても値がリセットされない」ことが前提になっています。
+これは、今までのようにブラウザで JavaScript を動作させ、カウンタを作成することができないことを意味します。
+
+では、バックエンド側では何を行えばいいのでしょうか。
+一つはブラウザで動作する HTML を送信すること、もう一つは値を保存し、フロントエンドからの要求に応じて値を変更することです。
+
+<CaptionImage src="/attachments/meister/js/2024/6/counter.webp" caption="マイナス・プラスボタンと数字が表示された、最低限のカウンタ。" />
+
+今回は、サーバーを作成した際、フロントエンド側と連携できるようにあらかじめ以下のように決定しています。
+この環境で動かす場合サーバー名は同じく `localhost` となりますので、特別に記載がないものは省略しています。
+
+- / にアクセスすると、カウンタの画面が実装された HTML が閲覧できる。
+- /count にアクセスすると、カウンタの値が取得できる。
+- /increment にアクセスすると、カウンタの値が 1 増える。なお、増えた後の値がレスポンスボディとなる。
+- /decrement にアクセスすると、カウンタの値が 1 減る。なお、減った後の値がレスポンスボディとなる。
+
+### サンプル HTML
+`/` にアクセスしたときに表示される HTML ファイルは、以下からコピー＆ペーストしてください。
+
+```html
+<html>
+    <head>
+        <style>
+            body {
+                justify-content: center;
+                font-family: system-ui;
+                font-size:  2em;
+                display: flex;
+                align-items: center;
+                gap: 0.5em;
+            }
+            button {
+                font-size: 1.2em;
+                aspect-ratio: 1;
+                padding: 0.2rem;
+                line-height: 1;
+                width: 1em;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+    </head>
+    <body>
+        <button id="minus">-</button>
+        <span>0</span>
+        <button id="plus">+</button>
+        <script>
+            const span = document.querySelector("span");
+            (async () => {
+                span.textContent = await fetch("/count").then(r => r.text());
+            })();
+            document.querySelector("#minus").onclick = async () => {
+                span.textContent = await fetch("/decrement").then(r => r.text());
+            };
+            document.querySelector("#plus").onclick = async () => {
+                span.textContent = await fetch("/increment").then(r => r.text());
+            };
+        </script>
+    </body>
+</html>
+```
+
+## 実装
+
+以前に紹介したサンプルコードを掲載します。
+
+このサンプルコードから内容を思い出して作成してみてください。
+わからない場合は、気軽にTAに相談してください。
+
+### 重要な Tips
+
+Fasitfy では、リクエストのハンドラの戻り値に数字を指定しても、数字がレスポンスボディとなって返ってくることはありません。
+これはエラーではなく、仕様です。
+
+そこで、数字を文字列に変換します。
+第2回の型の概念で、以下のように説明しています。
+
+```js
+document.write("1" + String(1));
+// あるいは
+document.write("1" + (1).toString());
+```
+
+今回は汎用性の高い `toString` 標準メソッド（下のコード）を使用します。
+
+ここで、`(1)` とは数字そのものを指しています。単純に `var hensuu = 1;` のとき、数値を書いていることと同等です。
+
+これを利用することで、数字を文字列に変換し、return を用いてレスポンスボディに設定することができます。
+
+<Tips>
+ここでは `(1)` と数字をかっこで囲んでいますが、「数値が入った変数」をかっこで囲う必要はありません。
+これは、`1.toString()` と記載し、エラーになることを避けるためです。
+
+`1.` の時点では、解釈としてこの後に数字が続く場合のほうが優先されます。
+つまり、この `.`（ドット）は、JavaScript のオブジェクトを参照するのではなく、小数点を参照するとして解釈されてしまい、エラーになるということです。
+</Tips>
+
+### 第5回: HTTP の補足
+
+この講義で何度か出てきましたが、「レスポンスボディ」というのは実際のレスポンスの内容となります。
+
+例えば、以下のような HTTP 通信があったとします。
+これは、サーバーからクライアントに送信されるものです。
+
+```
+HTTP/1.1 200 OK
+Date: Sun, 23 Jun 2024 22:49:18 GMT
+Content-Type: text/html
+Content-Length: 8888
+
+... HTMLデータ ...
+```
+
+「... HTMLデータ ...」と記載されている箇所があります。
+ここが、レスポンスボディです。
+
+レスポンスボディには、一般的に好きな内容を含めることができます。
+そのため、前回は好きなファイルを送信できていた、ということです。
+
+### 第5回(バックエンド): サーバーを Fastify で実装する
+
+```js
+var Fastify = require("fastify");
+
+var server = Fastify();
+
+server.get("/", async (request, reply) => {
+    return "Hello!";
+});
+
+server.listen({ port: 80 });
+```
+
+### 第5回(バックエンド): ファイルを送信する
+
+```js
+server.get("/movie.mp4", async (request, reply) => {
+    return fs.readFile("C:\\Users\\Mirrei\\movie.mp4");
+});
+```
+
+<Tips>
+fs.readFile の第一引数に指定している文字列は、ファイルパスです。
+同記事のカレントディレクトリの節でファイルパスについて軽く説明をしています。
+</Tips>
+
+### 第1回: 変数宣言
+
+```js
+var hensuu;
+
+hensuu = 1;
+hensuu = 0.1;
+hensuu = "任意の文字列";
+hensuu = 1 + 2 + 3 + 4 + 5;
+```
+
+### 第1回: インクリメント・デクリメント
+
+```js
+hensuu++;
+
+hensuu--;
+```
+
+<Tips>
+この構文を使用しなくとも、カウンタの値が 1 増えるまたは減る動作は実現可能です。
+</Tips>
+
+## 課題
+
+<Assignment regulation='[["fastify", "Fastify を使用する"], ["\\.listen\\(", "listen を行う"], ["fs\\.readFile\\(", "カウンタ HTML を送信する"], ["\\.get\\(./increment", "/increment を受け取る"], ["\\.get\\(./decrement", "/decrement を受け取る"], ["(\\+\\+?|\\+=)", "変数をインクリメントする"], ["(--?|-=)", "変数をデクリメントする"], ["return +(.+)\\.toString\\(\\)", "数値型変数を toString で文字列に直し、return する"]]'>
+- 要件は「実装」セクションをご覧ください。
+</Assignment>
+
+この課題の終了時点で、組み込みシステム開発マイスター JavaScriptコースは終了となります。
+
+次回は作品制作に関するガイダンスとなります。
+Teams より教員からのお知らせをお待ちください。

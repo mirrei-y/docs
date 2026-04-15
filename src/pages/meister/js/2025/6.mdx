@@ -1,0 +1,832 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第6回 HTTP・Web アプリケーション制作
+description: 第1回～第5回までの内容を使用し、実際に Web アプリケーションを制作します。
+written_by: Mirrei
+created_at: 2025-06-30 07:19:35
+updated_at: null
+parent: /meister/js/2025
+---
+
+import Info from "/src/components/Article/Info.astro";
+import Tips from "/src/components/Article/Tips.astro";
+import Hint from "/src/components/Article/Hint.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import InlineImages from "/src/components/Article/InlineImages.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Assignment from "/src/components/Article/Assignment.astro";
+import Example from "/src/components/Article/Example.astro";
+
+## HTTP/1.1
+
+最終回である今回は、今までの知識を使用して、サーバー側で処理を行う Web アプリケーションを作成します。
+
+### 概要
+
+私たちが Web ページを見るとき、Web ページのデータはインターネットを通じてどこかにあるサーバーと通信し、必要なデータをダウンロードしています。
+その際の通信に使用される約束事（プロトコル）が **HTTP** です。
+
+HTTP とは、Hypertext Transfer Protocol の略で、主に Web ページのデータを転送するための通信プロトコルです。
+
+<CaptionImage src="/attachments/meister/js/2024/5/http-abstract.webp" caption="HTTP を抽象化した図。@IT による、『第1回　HTTPプロトコルとは』より引用。" />
+
+例えば、今あなたが見ているこのページも、HTTP を使用して通信をしています。
+
+### URL
+
+自分のコンピューターにない Web サイトにアクセスするには、 URL (Uniform Resource Locator) という文字列が必要です。
+
+URL は、インターネット上で一意なファイルの位置です。
+URL にはどのサーバーのどのフォルダにあるファイル、という情報が含まれています。
+
+---
+
+例えば、 `https://docs.mirrei.dev/meister/js/2025/6` という URL において、指定されているのは以下の情報です。
+
+| 種類 | 内容 |
+| --- | --- |
+| 接続方式 | `https` (暗号化された接続) |
+| サーバー | `docs.mirrei.dev` |
+| パス | `/meister/js/2025/6` |
+
+**パス**というのは、PC 上のファイルの位置を示すアドレスです。
+例えば、`C:\Users\Mirrei\Desktop\課題.txt` といった形式で表されます。
+
+Linux や macOS（UNIX 系）では、`/Users/Mirrei/Desktop/課題.txt` などで表されます。
+URL では、基本的に後者の UNIX 系のパス表現を使用しています。
+
+### 利点
+
+HTTP をフルに活用すると、Web ページを取得した後も、JavaScript を使って追加のデータを取得するプログラムを書くことができるようになります。
+
+地図を表示できる Web サイトが代表的な例です。
+
+<CaptionImage src="/attachments/meister/js/2024/5/google-maps.webp" caption="代表的な地図を表示する Web アプリである Google Maps。" />
+
+ドラッグすると地図の表示範囲が移動しますが、巨大な全世界の地図データを最初にダウンロードすることは不可能なため、サーバーに置くことがほとんどです。
+
+そこで、まず最初に表示したい範囲の画像を要求する JavaScript コードを含んだページを送信し、後から表示したい範囲だけの地図データをダウンロードすることで、この問題を解決できます。
+
+<CaptionImage src="/attachments/meister/js/2024/5/google-maps-traffic.webp" caption="Google Maps の通信ログ。タイプが「script」のものは JavaScript コードで、「png」のものは地図の画像データ。" />
+<CaptionImage src="/attachments/meister/js/2024/5/google-maps-loading.webp" caption="地図を読み込み中の Google Maps。" />
+
+### リクエスト
+
+HTTP には複数のバージョンがありますが、今回はシンプルな HTTP/1.1 と呼ばれるバージョンの HTTP を学習します。
+
+クライアントが Web ページをダウンロードする際、まずクライアントはサーバーに対して以下のようなリクエストを送信します。
+
+```
+GET /meister/js/2025/5 HTTP/1.1
+Host: docs.mirrei.dev
+Accept: */*
+
+```
+
+`GET` は、そのファイル（リソースといいます）に対してどのような操作を行うかを指定します。
+これを、「リクエストメソッド」と呼びます。
+リクエストメソッドには、`GET`, `POST`, `DELETE` などが指定できます。
+
+<CaptionImage src="/attachments/meister/js/2024/5/http-request.webp" caption="HTTP リクエスト。@IT による、『「HTTP」の仕組みをおさらいしよう』の 図 7 を引用。" />
+
+Web ページを見るときには、GET メソッドが使用されます。
+また、クライアントが動的にサーバーにデータを送る際は、POST メソッド（まれにその他のメソッド）が使用されます。
+
+#### リクエストヘッダー
+
+この時点で1行目が終了し、その後は「リクエストヘッダー」という情報群になります。
+
+ヘッダーは、リクエストに追加データを付与するもので、`(キー): (値)` という書式で書きます。
+
+代表的に、以下のようなヘッダーがあります。
+
+| ヘッダー | 用途 |
+| - | - |
+| Host | 宛先ホスト名をサーバーに知らせる |
+| Accept | ブラウザが表示できるファイルの種類を、ブラウザが自己申告する |
+| User-Agent | ブラウザ名やバージョンを知らせる |
+| Cookie | サーバー側が、クライアントに一定量のデータを保存できるCookie機能で使用される |
+| Connection | リクエスト・レスポンスが終了した後、接続を切断するかどうか設定する |
+
+<Tips>
+[MDN Web Docs: リクエストヘッダー](https://developer.mozilla.org/ja/docs/Glossary/Request_header) では、より詳しいリクエストヘッダー一覧を見ることができます。
+</Tips>
+
+#### リクエストボディ
+
+先ほど示した以下のようなリクエストには、一部のメソッドで「リクエストボディ」を含めることができます。
+
+例えば、データ（画像、文章など）をサーバーに送る際などに、リクエストボディの部分にデータを格納します。
+
+```
+POST /api/novels HTTP/1.1
+Host: docs.mirrei.dev
+Content-Type: text/plain
+
+愛ということばは、いつから人間の社会に発生したものでしょう。
+愛という言葉をもつようになった時期に、人類はともかく一つの飛躍をとげたと思います。
+...
+```
+
+### レスポンス
+
+サーバーは、このリクエストに対し以下のようなレスポンスを送信します。
+
+```
+HTTP/1.1 200 OK
+Date: Sun, 23 Jun 2024 22:49:18 GMT
+Content-Type: text/html
+Content-Length: 8888
+
+... HTMLデータ ...
+```
+
+#### レスポンスヘッダー
+
+リクエストヘッダーと同様に、レスポンスにもヘッダーを含めることができます。
+
+代表的に、以下のようなヘッダーがあります。
+
+| ヘッダー | 用途 |
+| - | - |
+| Content-Type | ファイルの内容の種類（text/html, application/javascript など。詳しくは [MIME タイプ](https://developer.mozilla.org/ja/docs/Web/HTTP/Basics_of_HTTP/MIME_types) を参照） |
+| Content-Length | ファイルサイズ |
+| Date | レスポンスが生成された時刻 |
+| Server | サーバー名 |
+| Set-Cookie | サーバーが指定する、Cookie に保存するデータ |
+
+特に、`Content-Type` はブラウザに対してこのデータが何のデータか伝える重要な役割を持っています。
+**今回使用します**ので覚えておきましょう。
+
+<Tips>
+[MDN Web Docs: レスポンスヘッダー](https://developer.mozilla.org/ja/docs/Glossary/Response_header) では、より詳しいレスポンスヘッダー一覧を見ることができます。
+</Tips>
+
+#### レスポンスボディ
+
+先ほど示した以下のようなレスポンスで、「... HTMLデータ ...」と記されている部分です。
+
+ここは、実際にページの内容が格納される場所です。
+
+```
+HTTP/1.1 200 OK
+Date: Sun, 23 Jun 2024 22:49:18 GMT
+Content-Type: text/html
+Content-Length: 8888
+
+... HTMLデータ ...
+```
+
+### curl コマンドで実際の通信を行う
+
+ではここで Windows を例に実演してみましょう。
+画像は少々異なりますが、macOS や Linux でも手順に沿えば同じ手法で通信を行えます。
+
+「ターミナル」もしくは「コマンドプロンプト」を起動してください。
+
+<CaptionImage src="/attachments/meister/js/2024/5/command-prompt.webp" caption="Windows のターミナル。" />
+
+この画面で、`curl`（「カール」と読みます）という HTTP 通信を行えるソフトウェアを呼び出します。
+
+URL は引数として指定します。
+コマンドはスペース区切りで引数を指定できます。
+
+```bash
+curl https://mirrei.dev
+```
+
+このコマンドを入力し、Enter キーで実行してみましょう。
+
+<CaptionImage src="/attachments/meister/js/2024/5/command-prompt-curl.webp" caption="curl の実行結果。" />
+
+実際に HTML で記述された Web ページを呼び出すことができました。
+
+#### ヘッダーも見る
+
+`curl` の機能として、リクエストヘッダー・レスポンスヘッダーも見ることができます。
+
+URL の前に `-v` をつけることで、その機能が有効になります。
+
+```bash
+curl -v https://mirrei.dev
+```
+
+<CaptionImage src="/attachments/meister/js/2024/5/command-prompt-curl-verbose.webp" caption="verbose フラグを有効にした curl の実行結果。" />
+
+何やらいろいろな文字が書かれていますが、先頭に `>` がついた行がリクエストヘッダー、先頭に `<` がついた行がレスポンスヘッダーです。
+
+これを抽出すると以下のようになります。
+
+```
+> GET / HTTP/1.1
+> Host: mirrei.dev
+> User-Agent: curl/8.7.1
+> Accept: */*
+>
+
+< HTTP/1.1 200 OK
+< Date: Mon, 24 Jun 2024 00:17:51 GMT
+< Content-Type: text/html; charset=utf-8
+< Transfer-Encoding: chunked
+< Connection: keep-alive
+< Access-Control-Allow-Origin: *
+< Cache-Control: public, max-age=0, must-revalidate
+< referrer-policy: strict-origin-when-cross-origin
+< x-content-type-options: nosniff
+< Vary: Accept-Encoding
+< CF-Cache-Status: DYNAMIC
+< Server: cloudflare
+< alt-svc: h3=":443"; ma=86400
+<
+```
+
+確かに、ヘッダーを使用してファイル以外の情報をやり取りしていることがわかりました。
+
+## Node.js を使用する
+
+今回は、JavaScript のランタイムとして Node.js を使用します。
+
+「ターミナル」（「コマンドプロンプト」という名前になっていることもあります）を起動し、`node` と入力すると、Node.js を起動できます。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/node-interpreter.webp" caption="Node.js インタプリタ。" />
+
+`> ` と表示され、入力を受け付ける状態になりました。
+
+この状態で、JavaScript コードをいつでも実行することができます。試しに `1 + 1` と入力してみましょう。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/node-interpreter-2.webp" caption="1 + 1 を実行した Node.js インタプリタ。" />
+
+次に、何か関数・メソッドを使用してみましょう。
+
+Node.js では、 `console` オブジェクトの `console.log` メソッドを使用して、データを画面に出力することができます。
+
+```js
+console.log("Hello from Node.js interpreter!");
+```
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/node-interpreter-3.webp" caption="console.log を実行した Node.js インタプリタ。" />
+
+ここでは、JavaScript コードを入力することでそのまま実行できます。
+
+<Tips>
+`undefined` と表示されているのは、 `console.log` 関数の戻り値がないためです。
+
+`1 + 1` で `2` と表示された時、「`1 + 1` の計算結果を出力する」というプログラムは書いていませんでした。
+これは、Node.js が勝手に戻り値を出力してくれるからです。
+
+`console.log` は戻り値がない（`undefined` の値である）ため、Node.js インタプリタで実行すると `undefined` が出力されます。
+</Tips>
+
+<Tips>
+Node.js のインタプリタや、継続的に実行されるプログラム（今回作成する HTTP サーバーなど）は、Ctrl-C で終了し、元のコマンドの入力状態に戻ることができます。
+</Tips>
+
+### カレントディレクトリとは
+
+ターミナルには、**カレントディレクトリ**という概念があります。
+これは開いているターミナルのウィンドウで、現在自分がいるフォルダのことです。
+
+エクスプローラーや Finder のウィンドウでいう、現在見ているフォルダというイメージに近いです。
+例えば、「`A` というファイルを作成する」というコマンドを実行した際、カレントディレクトリの中に `A` というファイルが作成されます。
+
+カレントディレクトリはターミナルの `>` 以前に記載されています。
+
+<CaptionImage src="/attachments/meister/js/2024/5/command-prompt.webp" caption="Windows 11 のターミナル。C:\Users\Mirrei がカレントディレクトリである。" />
+
+カレントディレクトリを気にせずコマンドを実行してしまうと、コマンドによって作成したファイルの行き先が分からなくなったりしてしまいます。
+
+### カレントディレクトリを指定するには
+
+Node.js において基本的にライブラリはカレントディレクトリにインストールされるので、このカレントディレクトリの設定が必要です。
+
+#### ターミナルで開く
+
+Windows 11 の場合、エクスプローラーのウィンドウを右クリックすると「ターミナルで開く」選択肢がある場合があります。
+この方法では、右クリックしたウィンドウで開いているフォルダをカレントディレクトリにしつつ、最速でターミナルを開くことができます。
+
+<CaptionImage src="/attachments/meister/js/2024/5/backend/context-menu.webp" caption="Windows 11 のコンテキストメニュー。" />
+
+#### コマンドで移動する
+
+`cd` コマンドを使用することで、コマンドでカレントディレクトリを移動することができます。
+以下のようにスペースを空けフォルダを指定することで、カレントディレクトリを移動します。
+
+```bash
+cd フォルダのパス
+```
+
+フォルダのパスは、ターミナルのウィンドウにドラッグ＆ドロップすると自動で入力されることが多いですので、活用しましょう。
+
+<Tips>
+例えば、OneDrive に同期されたデスクトップ、「PC」「ネットワーク」フォルダ等の特殊なフォルダは、見たままのパスを入力しても移動できないことがあります。
+</Tips>
+
+### Node.js で .js ファイルを実行する
+
+Node.js は、JavaScript を打ち込んで実行する以外にも、`.js` ファイルに書かれた内容を実行することもできます。
+Node.js の使い方としてはこちらのほうが多いです。
+
+```bash
+node ファイルのパス
+```
+
+<CaptionImage src="/attachments/meister/js/2025/6/node-load-file.webp" caption="Node.js を使用して .js ファイルを実行している図。" />
+
+これ以降は、この .js ファイルに書き込んでいる前提で進めます。
+
+### Fastify をインストールする
+
+それでは、Node.js と Fastify を使用して、Web ページを配信するプログラムを作ってみましょう。
+自分で HTTP を一から実装することもできるのですが、それは大変なので、今回は「Fastify」というライブラリを使用します。
+
+ライブラリとは、誰かが作成した処理（クラスや関数など）のまとまりのことであり、大抵のプログラミング言語にはこの機能が付いています。
+ライブラリは、先ほどのターミナルから、Node.js に同梱されている `npm` コマンドを利用してインストールすることができます。
+
+```bash
+npm install fastify
+```
+
+何かしらのライブラリをインストールすると、カレントディレクトリ内に `node_modules`、`package.json`、`package-lock.json` が作成されます。
+このディレクトリ内に配置された JavaScript ファイルは、Node.js で実行したときにライブラリを読み込むことができます。
+
+<CaptionImage src="/attachments/meister/js/2025/6/npm-package-directory.webp" caption="npm によって依存関係がインストールされたディレクトリ。" />
+
+## Fastify を使用する
+
+Node.js では、npm でインストールしたライブラリを `require` というデフォルトで用意された関数で読み込むことができます。
+
+第一引数にライブラリ名を指定すると、戻り値にライブラリ側で公開された値（オブジェクトであることが多い）が返ってきます。
+
+```js
+const Fastify = require("fastify");
+```
+
+<Tips>
+`require` 関数を使用してライブラリを読み込む方法はすでに古くなっており、実際の開発では `import` 文を使用することが推奨されます。
+</Tips>
+
+### Fastify の使い方
+
+Fastify は、サーバーを作成する関数を公開します。
+
+```js
+const Fastify = require("fastify");
+
+const server = Fastify();
+```
+
+このサーバーオブジェクトでは、以下のようなメソッドが使用できます。
+
+#### `server.get(path, handler)`
+
+ブラウザからの [`GET` リクエスト](#リクエスト)（Web ページを表示する際などに使われます）を受け取ったときに、どのような処理を行うかを設定するメソッドです。
+
+`path` には、リクエストを受け付けたい URL のパスを指定します。
+例えば、`/` と指定すると、サイトのトップページへのリクエストを処理します。
+
+`handler` には、リクエストが来たときに実行したい関数を指定します。
+この関数には、リクエストに関する情報 (`request`) と、レスポンスを返すための情報 (`response`) が引数として渡されます。
+
+<Hint>
+これ以降、リクエストとレスポンスのオブジェクトに存在する便利なプロパティ・メソッドについて解説します。
+その際 `request.xxx`, `response.xxx` と表記しますが、これは変数の名前に合わせて解釈する必要があります。
+
+例えば、`handler` に指定した関数の引数が `(req, res)` であったら、それぞれ `req.xxx`, `res.xxx` とする必要があります。
+</Hint>
+
+例えば、`/hello` にアクセスした際に「Hello world!」と返すプログラムは、以下のようになります。
+
+```js
+server.get("/hello", (_, res) => {
+    res.send("Hello world!");
+});
+```
+
+#### `server.post(path, handler)`
+
+ブラウザからの [`POST` リクエスト](#リクエスト)（サーバーへのデータの送信などで使われます）を受け取ったときに、どのような処理を行うかを設定するメソッドです。
+
+使い方は `server.get` と似ていますが、`POST` リクエストはクライアントからサーバーにデータを送信するため、後述する `request.body` を使ってそのデータを受け取ることができます。
+
+```js
+server.post("/data", (req, res) => {
+    console.log(`データを受け取りました: ${req.body}`);
+});
+```
+
+#### `server.listen(options, callback)`
+
+作成した Fastify サーバーを起動し、指定したポート番号でリクエストを受け付けられるようにするメソッドです。
+**これをアプリケーションの最後に配置しないと、Fastify はサーバーを起動しません**。
+
+`options` には、起動に関する設定のオブジェクトを指定します。
+
+`callback` には、サーバーが起動した後に実行したい関数を指定します。
+サーバーが正常に起動したかどうかの確認などに使えます。
+`callback` は、指定しないこともできます。
+
+#### `response.send(payload)`
+
+リクエストの処理内で使用する、実際にクライアントにデータを送信するメソッドです。
+Web ページの内容（HTML）や、その他の応答データ（JSON など）をクライアントに送り返すために使われます。
+
+`payload` には、クライアントに送信したいデータを文字列として指定します。
+`payload` を指定しないこともできます（例: `response.send();`）。
+
+HTML を送信したいときは、次に示す `response.header` メソッドを使用して、先述した `Content-Type` を `text/html` にする必要があります。
+
+また、この関数はリクエストを処理する際に必ず呼ぶ必要があります。
+
+#### `response.header(name, value)`
+
+クライアントに返すレスポンスに、[レスポンスヘッダー](#レスポンスヘッダー)を追加するメソッドです。
+
+`name` にはヘッダーの名前（例: `"Content-Type"`）、`value` にはヘッダーの値（例: `"text/html"`）を指定します。
+
+```js
+res.header("Content-Type", "text/html");
+```
+
+#### `request.body`
+
+クライアントから `POST` リクエストなどで送信されたデータ（リクエストボディ）にアクセスするためのプロパティです。
+
+内容は場合によって文字列だったりオブジェクトだったりすることがありますが、本講義の範囲内では文字列として扱って構いません。
+
+### サンプル
+
+以上を組み合わせて、以下のようなシステムが作れます。
+`/hello` にアクセスしたときに `Hello world!` と返すプログラムです。
+
+```js
+const Fastify = require("fastify");
+const server = Fastify();
+
+server.get("/hello", (_, res) => res.send("Hello world!"));
+server.listen({ port: 12345 });
+```
+
+## fetch を使用して動的にデータを取得する
+
+冒頭に紹介した「地図を表示できる Web サイト」の例では、一度ページが読み込まれた後に、JavaScript を使って追加のデータを取得するプログラムを作成していると説明しました。
+これの実態は、`fetch` と呼ばれるグローバル関数です。
+
+`fetch` は、ブラウザからサーバーへ HTTP リクエストを送信し、その応答（レスポンス）を受け取るための JavaScript の標準メソッドです。
+
+`fetch` 関数は、第一引数にリクエスト先の URL を指定して呼び出します。
+第二引数には、リクエストの詳細を設定するためのオプションオブジェクトを渡すことができます（省略可能）。
+
+```js
+fetch(url, options)
+```
+
+`url` には、データを取得したいサーバーの URL を文字列で指定します。
+`options` には、リクエストメソッドやヘッダー、送信するデータなどを設定するオブジェクトを指定します。
+
+`fetch` 関数は Promise を返します。この Promise は、サーバーからの応答を受け取ったときに Response オブジェクトで解決されます。
+
+### オプション
+
+`options` オブジェクトには、以下のようなプロパティを指定できます。
+
+#### `method`
+
+リクエストメソッドを指定します。デフォルトは `"GET"` です。
+データを送信したい場合は `"POST"` などを指定します。
+
+```js
+fetch("/data", {
+    method: "POST"
+});
+```
+
+#### `headers`
+
+リクエストヘッダーを指定します。オブジェクト形式で、キーにヘッダー名、値にヘッダーの値を指定します。
+
+```js
+fetch("/api/users", {
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer your_token"
+    }
+});
+```
+
+#### `body`
+
+`POST` や `PUT` などのメソッドでサーバーに送信したいデータを指定します。文字列や FormData オブジェクトなどを指定できます。
+
+```js
+fetch("/data", {
+    method: "POST",
+    body: "ここに書かれた文字列が、サーバーに送られます"
+});
+```
+
+### Response オブジェクト
+
+`fetch` が返す Promise が解決されると得られるのが Response オブジェクトです。
+このオブジェクトには、サーバーからの応答に関する情報が含まれています。
+
+#### Promise とは
+
+`fetch` 関数が返す **Promise** とは、「将来完了する処理」を表すオブジェクトです。
+サーバーからの応答を受け取るという処理は、時間がかかるためすぐに結果が得られません。
+Promise は、その「時間がかかる処理」が終わったときに、その結果を教えてくれる仕組みです。
+
+Promise オブジェクトには `.then()` というメソッドがあり、これを使うことで「処理が成功したら実行したい関数」を登録できます。
+`fetch` の場合は、サーバーからの応答（Response オブジェクト）が得られたときに `.then()` に登録した関数が実行されます。
+
+Promise は非同期処理という概念の一つで、今回は取り扱わないため、とりあえず `.then()` メソッドだけ覚えておけばよいでしょう。
+
+`.then()` メソッドは、第一引数に関数を要求します。
+その関数に代入されるのは、Promise が解決されると得られるオブジェクトです。
+
+```js
+fetch(url)
+    .then(response => {
+        // サーバーからの応答が得られたら、この部分が実行される
+        // response には Response オブジェクトが入っている
+    });
+```
+
+#### `response.status`
+
+HTTP ステータスコードを表す数値です。
+今回は取り扱いませんが、成功すれば `200`, ページが見つからなければ `404` … といったように変化します。
+
+#### `response.ok`
+
+HTTP ステータスコードが 200-299（成功）の範囲内であれば `true`、それ以外であれば `false` となります。
+リクエストが成功したかどうかを簡単に確認できます。
+
+#### `response.text()`
+
+レスポンスボディを文字列として読み込み、その結果を含む Promise を返します。
+
+```js
+fetch("/hello")
+    .then(response => response.text())
+    .then(text => {
+        console.log(text); // テキストデータを使用
+    });
+```
+
+### 使用例
+
+例えば、以前の Fastify サーバーのサンプルで定義した `/hello` に対してリクエストを送り、そこからテキストを取得する例です。
+
+```js
+fetch("/hello")
+    .then(response => {
+        return response.text();
+    })
+    .then(text => {
+        console.log(text); // "Hello world!" と表示される
+    });
+```
+
+## 課題
+
+{/*
+import Fastify from "fastify";
+
+const server = Fastify();
+const TEMPLATE = `
+<html>
+<head>
+    <title>簡易メモ帳</title>
+</head>
+<body>
+    <textarea id="memoInput" rows="10" cols="100">__MEMO__</textarea><br>
+    <button id="saveButton">保存</button>
+
+    <script>
+        const memoInput = document.getElementById("memoInput");
+        const saveButton = document.getElementById("saveButton");
+
+        saveButton.onclick = () => {
+            fetch("/memo", {
+                method: "POST",
+                body: memoInput.value,
+            });
+        };
+    </script>
+</body>
+</html>
+`;
+
+let memo = "初期メモです。";
+
+server.get("/", (request, response) => {
+    response.header("Content-Type", "text/html");
+    response.send(TEMPLATE.replaceAll("__MEMO__", memo));
+});
+
+server.post("/memo", (request, response) => {
+    memo = request.body;
+    console.log("メモを更新しました: " + memo);
+});
+
+server.listen({ port: 80 }, () => {
+    console.log("サーバーを起動しました");
+});
+```
+*/}
+<Assignment injecter={`
+    const _fastifyEmulator = {
+        _getRoutes: [],
+        _postRoutes: [],
+
+        get: (path, handler) => {
+            _fastifyEmulator._getRoutes.push({ path, handler });
+            return _fastifyEmulator;
+        },
+        post: (path, handler) => {
+            _fastifyEmulator._postRoutes.push({ path, handler });
+            return _fastifyEmulator;
+        },
+        listen: (options, callback) => {
+            if (options?.port !== 80) throw new Error("server.listen のオプションが正しくありません");
+            if (callback) callback();
+        },
+    };
+    const require = (moduleName) => {
+        if (moduleName === "fastify") {
+            return () => _fastifyEmulator;
+        } else {
+            throw new Error("Fastify 以外のモジュールは読み込まないでください");
+        }
+    };
+`} asserter={() => {
+    function callHandler(route, body) {
+        const mockReq = {
+            body
+        };
+        const mockRes = {
+            _headers: {},
+            _body: null,
+            header: (name, value) => {
+                mockRes._headers[name] = value;
+                return mockRes;
+            },
+            send: (payload) => {
+                mockRes._body = payload;
+                return mockRes;
+            },
+        };
+        route.handler(mockReq, mockRes);
+        return {
+            headers: Object.fromEntries(Object.entries(mockRes._headers).map(([k, v]) => [k.toLowerCase(), v])),
+            body: mockRes._body,
+        };
+    }
+
+    // NOTE: GET / ルートが定義されているか確認
+    const getRoute = _fastifyEmulator._getRoutes.find(r => r.path === "/");
+    if (!getRoute) return { ok: false, message: "GET / ルートが定義されていません。" };
+    if (typeof getRoute.handler !== "function") return { ok: false, message: "GET / のハンドラが関数ではありません。" };
+
+    // NOTE: POST /memo ルートが定義されているか確認
+    const postRoute = _fastifyEmulator._postRoutes.find(r => r.path === "/memo");
+    if (!postRoute) return { ok: false, message: "POST /memo ルートが定義されていません。" };
+    if (typeof getRoute.handler !== "function") return { ok: false, message: "POST /memo のハンドラが関数ではありません。" };
+
+    // NOTE: メモを挿入
+    const validator1 = Math.random().toString(36).slice(2);
+    callHandler(postRoute, validator1);
+
+    // NOTE: 初期値を確認
+    const response = callHandler(getRoute, null);
+    if (response.headers["content-type"] !== "text/html") return { ok: false, message: "GET / ハンドラで Content-Type が設定されていないか、正常な値ではありません。" };
+    if (typeof response.body !== "string") return { ok: false, message: "この講義においては、response.send へ渡す引数は文字列である必要があります。" };
+    if (!response.body.includes("<textarea") || !response.body.includes("<button")) return { ok: false, message: "GET / ハンドラで HTML が渡されていません。" };
+    if (!response.body.includes(validator1)) return { ok: false, message: "GET / ハンドラでメモの内容を反映した HTML を出力するようにしてください。" };
+
+    return {
+        ok: true,
+        message: null
+    };
+}}>
+    第1回から第6回までの内容を総合的に使用し、簡易メモ帳 Web アプリケーションを実装してください。
+    ここではサーバープログラムと HTML を作成し、HTML をサーバープログラムに同梱する形で実装します。
+
+    #### サンプル
+    「メモを更新」ボタン（表示されるラベル名は何でも構いません）を押すと、サーバーへ通信を行い、再読み込みしても同じメモが表示されるようにします（このサンプルは動作しません）。
+
+    <Example touchable={true}>
+        <textarea rows="10" placeholder="（これはイメージです。実際には、CSS で装飾する必要があります）">
+        </textarea>
+        <button type="button">メモを更新</button>
+    </Example>
+
+    #### 注意と補足
+    なお、`server.listen` の第一引数の設定オブジェクトは、必ず `{ port: 80 }` にしてください。
+
+    起動したサーバープログラムへは、ブラウザから URL `http://localhost/...` でアクセスできます。
+    例えば、パス `/hello` でリクエストを受信するような設定にしていれば、`http://localhost/hello` にアクセスすることでサーバープログラムと通信できます。
+
+    <Tips>
+        この `{ port: 80 }` についても意味がありますが、JavaScript を外れネットワークについて勉強しなくてはならないため、今回は扱いません。
+    </Tips>
+
+    #### サーバープログラム
+    サーバープログラムでは Fastify を使用して、後述するパスでリクエストを処理する HTTP サーバーを作成します。
+    メモの一時保存用変数を作成し、後述するパスでリクエストを受信したら、適宜書き換えます。
+
+    #### GET /
+    メモ帳の HTML ページを返してください。
+
+    HTML ページについては、以下の基準を満たすようにしてください。
+    - 現在のメモの内容を表示する `<textarea>` と、保存ボタン `<button>` を含めてください。
+    - CSS を使用して装飾してください。
+    - HTML 内の JavaScript は、今まで学習したオブジェクトやメソッド（例: `getElementById` と `value` など）を使用して、保存ボタンがクリックされたときに `/memo` へ POST リクエストを送信するように実装してください。
+
+    なお、サーバーサイドで `<textarea>` 内に現在のメモの内容を挿入するようにしてください。
+
+    #### POST /memo
+    リクエストボディとして送られてきたメモの内容を受け取り、サーバー側の変数に保存するようにしてください。
+</Assignment>
+
+## ヒント・トラブルシューティング
+
+### まず何をしたらいいかわからない
+
+- 一つのファイルに JavaScript と HTML をごちゃごちゃにして書いていませんか？
+    プログラミングは、「やりたいことを書けば動く」ものではありません。
+    この規模のプログラムであれば、仕組みを理解したうえで、一番最初に動くプログラムから書くべきです。
+
+    完成系のファイルが、どの言語でどんなプログラムが書かれるか考えてみましょう。
+
+    ```js
+    // 間違った例
+    const Fastify = require("fastify");
+    const server = Fastify();
+
+    server.get("/",
+        <html>
+            <head>
+                ...
+            </head>
+            <body>
+                <p>Hello world!</p>
+            </body>
+        </html>
+    );
+    ```
+
+    ```js
+    // 間違った例
+    let counter = 0;
+
+    <html>
+        <head>
+            ...
+        </head>
+        <body>
+            <button>counter += 1;</button>
+        </body>
+    </html>
+    ```
+
+- 完成系のファイルは、サーバープログラムとなる JavaScript を記述する .js ファイルです。
+    HTML のデータは、サーバープログラムの中で文字列として保持します。
+    先ほど述べたように、`response.send` 関数は文字列を受け付けるからです。
+
+    ```js
+    // ...略...
+    server.get("...", (req, res) => {
+        // ...略...
+        res.send(`
+            <html>
+                <head>
+                    ...
+                </head>
+                <body>
+                    <p>Hello World!</p>
+                </body>
+            </html>
+        `);
+    });
+    ```
+
+    <Tips>
+        `"`（ダブルクォーテーション）より、<code>&#96;</code>（バッククォート）で記述したほうが、複数行記入できて便利です。
+    </Tips>
+
+### HTML が映らない
+
+- HTML が映らない、以下のようにソースがそのまま見えてしまう場合は、`Content-Type` [レスポンスヘッダー](#レスポンスヘッダー)の設定をし忘れています。
+    `Content-Type` ヘッダーがないと、Fastify はデフォルトで `text/plain` という、テキストファイルの MIME タイプをブラウザに伝えてしまいます。
+    <CaptionImage src="/attachments/meister/js/2025/6/hint-content-type.webp" caption="Content-Type が設定されていないレスポンスの表示結果。" />
+
+- また、「Not Found」や「404」という文字が見える場合は、「URL のパスが間違っており、ページを見つけられなかった」というエラーが発生しています。
+    アクセスしている URL や、サーバープログラムのパス設定が間違っていないか確認してください。
+    <CaptionImage src="/attachments/meister/js/2025/6/hint-404.webp" caption="Fastify のデフォルト 404 レスポンス。" />
+
+- ブラウザ側でエラーが出る場合は、そもそもこのサーバープログラムに接続できていません。
+    アクセスしている URL が間違っていないか、サーバープログラムでエラーが発生せず、本当に起動しているか確認してください。
+    <CaptionImage src="/attachments/meister/js/2025/6/hint-browser-error.webp" caption="Google Chrome におけるドメイン解決エラー。" />
+
+- 文字化けしている場合は、`<meta charset="utf-8">` を `<head>` タグの中に追加してください。

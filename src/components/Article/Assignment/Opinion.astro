@@ -1,0 +1,25 @@
+<div class="opinion">
+    <textarea rows="5" id="opinionText" placeholder="講義資料のこの部分がわかりにくい, この項目を取り入れてほしい, 好きな言語は何ですか... etc"></textarea>
+    <button type="button" id="sendOpinion">送信</button>
+</div>
+
+<style>
+    button {
+        font-size: 0.8em;
+        margin-left: auto;
+        margin-top: 0.5em;
+    }
+</style>
+
+<script>
+    const button = document.querySelector<HTMLButtonElement>("#sendOpinion")!;
+    button.addEventListener("click", () => {
+        const textarea = document.querySelector<HTMLTextAreaElement>("#opinionText")!;
+        fetch("/api/meister/js/feedback", {
+            method: "POST",
+            body: textarea.textContent
+        }).catch(() => { });
+        textarea.disabled = true;
+        button.disabled = true;
+    });
+</script>

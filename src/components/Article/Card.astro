@@ -1,0 +1,87 @@
+---
+interface Props {
+    color: string;
+    classes?: string[];
+    style?: string;
+}
+
+const { color, classes, style } = Astro.props;
+---
+
+<aside class:list={["card", ...(classes ?? [])]} style={`--color:${color};${style ?? ""}`}>
+    <header aria-hidden="true">
+        <slot name="header" />
+    </header>
+    <div>
+        <slot name="content" />
+    </div>
+</aside>
+
+<style is:global>
+    .card {
+        --color: #ffffff;
+
+        margin: 1.5rem 1rem;
+        padding-inline: 1.5em;
+
+        display: flex;
+        align-items: center;
+        gap: 1.5em;
+
+        line-height: 1.5;
+
+        font-size: 0.8em;
+        opacity: 0.8;
+
+        padding-block: 1em;
+
+        border-top: 2px solid rgba(from var(--color) r g b / 0.5);
+        border-bottom: 2px solid rgba(from var(--color) r g b / 0.5);
+        border-left: 0.5rem solid var(--color);
+        border-right: 1px solid rgba(from var(--color) r g b / 0.5);
+        border-radius: 1rem;
+
+        & > header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0px;
+
+            font-weight: bold;
+            line-height: 1;
+
+            color: var(--color);
+
+            svg {
+                width: 1.75rem;
+                height: 1.75rem;
+                color: var(--color);
+            }
+        }
+        & > div {
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
+
+            flex: 1;
+        }
+        p {
+            margin-block: 0.2em;
+        }
+    }
+
+    @media (max-width: 30rem) {
+        .card {
+            flex-direction: column;
+            gap: 0.5rem;
+
+            padding: 1rem;
+            border: 3px solid var(--color);
+            border-radius: 0.5rem;
+
+            & > header {
+                border-left: none;
+            }
+        }
+    }
+</style>

@@ -1,0 +1,132 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第6回(フロントエンド) 実践！Web アプリケーションを作成する
+description: HTML, CSS, JavaScript を使用して、Web アプリケーションを自分で作成することを目標にします。
+written_by: onestep621
+created_at: 2024-07-02 08:38:00
+updated_at: null
+parent: /meister/js/2024
+---
+
+import Assignment from "/src/components/Article/Assignment.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import Info from "/src/components/Article/Info.astro";
+
+## 実装するもの
+今回の目標は、Web アプリケーションを自分で作成し、組み合わせられるようなプログラムを作成することです。
+具体的には、ページを再読み込みしても値がリセットされない、カウンタを作成してみることにします。
+
+### 注意点
+今回はバックエンドとフロントエンドの連結は行いません。
+本来はバックエンドを自分で作成して、フロントエンドと連携することが望ましいですが、今回はフロントエンドのみ実装し、こちらで予め用意したバックエンドと連携することにします。
+
+## 設計
+今回は「ページを再読み込みしても値がリセットされない」ことが前提になっています。
+これは、今までのようにブラウザで JavaScript を動作させ、カウンタを作成することができないことを意味します。
+そこで、カウントする数字の情報はサーバー(バックエンド)側に任せ、フロントエンド側はその情報を取得して表示するようにします。
+カウントを増やすためには、サーバーにリクエストを送り、カウントを減らすためには、サーバーに別のリクエストを送ります。
+
+今回は、
+- カウンタの値を増やすためには`https://docs.mirrei.dev/meister/js/2024/api/increment`にリクエストを送り、
+- カウンタの値を減らすためには`https://docs.mirrei.dev/meister/js/2024/api/decrement`にリクエストを送ることにします。
+
+それぞれ、増やした/減らした後の値がレスポンスボディとして返ってきます。また、
+- 単純に現在の値を取得するためには`https://docs.mirrei.dev/meister/js/2024/api/count`にリクエストを送ります。
+
+<Caution>
+2025年度からはこの URL は使用できなくなっています。
+そのため、以下の処理を実装しても正しいカウンタは実装できません。ご了承ください。
+</Caution>
+
+<Info>
+今回は予め用意したバックエンドを使用するため`docs.mirrei.dev`で始まる上記のURLですが、自分で用意したURLを使用する場合はまた別のURLになります。
+</Info>
+
+## 実装
+以前に紹介したサンプルコードを掲載します。
+
+このサンプルコードから内容を思い出して作成してみてください。
+わからない場合は、気軽にTAに相談してください。
+
+### おさらい1
+まずはHTMLの雛形を作成します。以下に再掲します。
+```html
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <title>タイトル</title>
+    <style>
+      /* ここにCSS(後述)のコード */
+    </style>
+  </head>
+  <body>
+    <!-- ここにメインの内容 -->
+    <script>
+      // ここにJavaScriptのコード
+    </script>
+  </body>
+</html>
+```
+
+ここで、`<body>`内にカウンタを表示するための要素を追加します。
+カウンタには以下が必要です。
+- カウンタの値を表示する`<span>`要素
+- カウンタを増やす`<button>`要素
+- カウンタを減らす`<button>`要素
+
+JavaScriptからアクセスしやすいようにIDも振っておきましょう。
+カウンタの値を表示する`<span>`には`count`、カウンタを増やすボタンには`increment`、カウンタを減らすボタンには`decrement`というIDを振ってください。
+
+### ボタンが押されたときの処理
+次に、ボタンが押されたときにカウンタを増減させる処理を追加します。
+ボタンが押されたときに処理をするには、以下のように書きます。
+```js
+(取得したボタンの要素).addEventListener("click", () => {
+  // ここに処理を書く
+});
+```
+
+### おさらい2
+バックエンドにリクエストを送って、返ってきたデータ(レスポンスボディ)を変数に記録するには、以下のように描きます。
+```js
+var result = await fetch(url).then(r => r.text());
+```
+
+### レスポンスボディとは
+この講義で何度か出てきましたが、「レスポンスボディ」というのは実際のレスポンスの内容となります。
+
+例えば、以下のような HTTP 通信があったとします。
+これは、サーバーからクライアントに送信されるものです。
+
+```
+HTTP/1.1 200 OK
+Date: Sun, 23 Jun 2024 22:49:18 GMT
+Content-Type: text/html
+Content-Length: 8888
+
+... HTMLデータ ...
+```
+
+「... HTMLデータ ...」と記載されている箇所があります。
+ここが、レスポンスボディです。
+
+レスポンスボディには、一般的に好きな内容を含めることができます。
+
+### おさらい3
+CSSでボタンを装飾するには、以下のように書きます。
+```css
+#ボタンのID {
+  /* ここにボタンのスタイル */
+}
+```
+
+## 課題
+<Assignment regulation='[["addEventListener", "ボタンをクリックしたときに実行する"], ["https://docs\\.mirrei\\.dev/meister/js/2024/api/increment", "incrementする"], ["https://docs\\.mirrei\\.dev/meister/js/2024/api/increment", "decrementする"], ["https://docs\\.mirrei\\.dev/meister/js/2024/api/count", "現在の値を得る"], ["#increment", "incrementボタンを装飾する"], ["#decrement", "decrementボタンを装飾する"]]'>
+- 要件は「実装」セクションをご覧ください。
+</Assignment>
+
+この課題の終了時点で、組み込みシステム開発マイスター JavaScriptコースは終了となります。
+
+次回は作品制作に関するガイダンスとなります。
+Teams より教員からのお知らせをお待ちください。

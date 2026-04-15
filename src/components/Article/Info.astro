@@ -1,0 +1,22 @@
+---
+import Card from "./Card.astro";
+---
+
+<Card color="#3391a8">
+    <Fragment slot="header">
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon icon-tabler icon-tabler-info-circle-filled"
+            width="44"
+            height="44"
+            viewBox="0 0 24 24"
+        >
+            <path
+                d="M12 2c5.523 0 10 4.477 10 10s-4.477 10 -10 10s-10 -4.477 -10 -10s4.477 -10 10 -10zm0 9h-1l-.117 .007a1 1 0 0 0 0 1.986l.117 .007h1v3l.007 .117a1 1 0 0 0 .993 .883l.117 -.007a1 1 0 0 0 .883 -.993l.007 -.117v-3l-.007 -.117a1 1 0 0 0 -.993 -.883zm1.01 -3.717l-.112 .007a1 1 0 0 0 -.888 .986l-.003 .114l.003 .114a1 1 0 0 0 .888 .986l.112 .007l.114 -.007a1 1 0 0 0 .888 -.986l.003 -.114l-.003 -.114a1 1 0 0 0 -.888 -.986z"
+                stroke-width="0"
+                fill="currentColor" />
+        </svg>
+        <span>Info</span>
+    </Fragment>
+    <slot slot="content" />
+</Card>

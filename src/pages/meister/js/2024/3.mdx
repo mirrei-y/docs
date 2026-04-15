@@ -1,0 +1,452 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第3回 標準関数・引数と戻り値、配列
+description: 引数と戻り値、便利な標準関数、配列について学習します。
+written_by: onestep621
+created_at: 2024-05-25 23:04:00
+updated_at: null
+parent: /meister/js/2024
+---
+
+import Assignment from "/src/components/Article/Assignment.astro";
+import Info from "/src/components/Article/Info.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import Tips from "/src/components/Article/Tips.astro";
+
+## 配列
+配列は、複数の値をまとめて扱うためのものです。配列は、以下のように書きます。
+```js
+[1, 2, 3, 4, 5]
+```
+
+配列の中には、数値だけでなく、文字列や他の配列も入れることができます。
+```js
+["Alice", "Bob", "Charlie"]
+[[1, 2], [3, 4], [5, 6]]
+```
+
+<Info>
+配列に複数の型を混在させることもできますが、基本的にはおすすめしません。
+```js
+[1, "Alice", [2, 3]]
+```
+</Info>
+
+配列の中身にアクセスするには、配列に対して `[0]` のように順番を指定します。
+```js
+var array = [1, 2, 3, 4, 5];
+document.write(array[0]); // 1
+document.write(array[1]); // 2
+document.write(array[2]); // 3
+// ...
+```
+
+<Caution>
+配列の順番（インデックスといいます）は 0 から始まります。
+</Caution>
+
+配列の長さは、`length`プロパティで取得できます。
+```js
+var array = [1, 2, 3, 4, 5];
+document.write(array.length); // 5
+```
+
+### 配列の操作
+
+#### 配列を伸ばす操作
+配列に要素を追加するには、`push`メソッドを使います。
+```js
+var array = [1, 2, 3, 4, 5];
+array.push(6);
+document.write(array); // [1, 2, 3, 4, 5, 6]
+```
+配列の先頭に要素を追加するには、`unshift`メソッドを使います。
+```js
+var array = [1, 2, 3, 4, 5];
+array.unshift(0);
+document.write(array); // [0, 1, 2, 3, 4, 5]
+```
+配列を結合するには、`concat`メソッドを使います。
+```js
+var array1 = [1, 2, 3];
+var array2 = [4, 5, 6];
+var array = array1.concat(array2);
+document.write(array); // [1, 2, 3, 4, 5, 6]
+```
+
+<Info>
+最近のJavaScriptでは、上のすべての操作をスプレッド構文でも行うことができます。
+```js
+var array = [1, 2, 3, 4, 5];
+
+array = [0, ...array];
+document.write(array); // [0, 1, 2, 3, 4, 5]
+
+array = [...array, 6];
+document.write(array); // [0, 1, 2, 3, 4, 5, 6]
+
+var array2 = [7, 8, 9];
+array = [...array, ...array2];
+document.write(array); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+```
+`[1, 2, 3]`を`...[1, 2, 3]`と書くと、コード中で`1, 2, 3`に変換されるイメージです。(あくまでイメージなので厳密には異なります)
+</Info>
+
+#### 配列を縮める操作
+配列の末尾の要素を取り出すには、`pop`メソッドを使います。
+```js
+var array = [1, 2, 3, 4, 5];
+array.pop();
+document.write(array); // [1, 2, 3, 4]
+```
+配列の先頭の要素を取り出すには、`shift`メソッドを使います。
+```js
+var array = [1, 2, 3, 4, 5];
+array.shift();
+document.write(array); // [2, 3, 4, 5]
+```
+配列の任意の部分を取り出すには、`slice`メソッドを使います。
+```js
+var array = [1, 2, 3, 4, 5];
+var slicedArray1 = array.slice(0, 3); // 0番目から3番目の手前までを取り出す
+document.write(slicedArray1); // [1, 2, 3]
+var slicedArray2 = array.slice(2, 4); // 2番目から4番目の手前までを取り出す
+document.write(slicedArray2); // [3, 4]
+var slicedArray3 = array.slice(3); // 3番目から最後までを取り出す(第2引数を省略すると最後までになります)
+document.write(slicedArray3); // [4, 5]
+```
+
+#### その他の操作
+配列の要素を逆順にするには、`reverse`メソッドを使います。
+```js
+var array = [1, 2, 3, 4, 5];
+array.reverse();
+document.write(array); // [5, 4, 3, 2, 1]
+```
+配列の要素を辞書順に並び替えるには、`sort`メソッドを使います。
+```js
+var array = ["Bob", "Alice", "Charlie"];
+array.sort();
+document.write(array); // ["Alice", "Bob", "Charlie"]
+```
+配列をつなげて文字列にするには、`join`メソッドを使います。
+```js
+var array = ["a", "b", "c"];
+var str1 = array.join(", ");
+document.write(str); // "1, 2, 3, 4, 5"
+var str2 = array.join(" / ");
+document.write(str); // "1 / 2 / 3 / 4 / 5"
+```
+配列操作は他にもたくさんあるので、必要に応じて調べてみてください。
+
+## 引数
+### 前回のおさらい
+前回、最後の方で関数について少し触れました。関数は処理をまとめて管理しやすくするためのもので、アロー関数式とfunctionキーワードの2つの書き方が書き方があることを思い出してください。
+
+### 概要
+さて、処理をまとめると言っても、完全に同じ処理ではなく、少しだけ違うような処理をしたいときがあります。そのときに使うのが引数です。
+
+前回の、HelloWorldを5回出力する例を見てみましょう。
+```js
+var sayHello = () => {
+    document.write("Hello, World!");
+    document.write("<br />");
+}
+
+for (var i = 0; i < 5; i++) {
+    sayHello();
+}
+```
+ここで、出力する文字列を「Hello, World!」ではなく、ループ中での現在の実行回数を出力したいとします。このとき、関数に引数を渡すことで、処理を変えることができます。
+```js
+var sayNumber = (num) => {
+    document.write(num);
+    document.write("<br />");
+}
+
+for (var i = 0; i < 5; i++) {
+    sayNumber(i + 1); // NOTE: iは0から始まるため、iに1を足して1, 2, 3, ...にしている
+}
+```
+`(引数の名前) => { 処理 }`の形で、引数を受け取るアロー関数式を書くことができます。
+
+functionキーワードを使う場合は、以下のようになります。
+```js
+function sayNumber(num) {
+    document.write(num);
+    document.write("<br />");
+}
+```
+
+### 複数指定
+
+引数は複数指定でき、その場合はカンマ（`,`）で区切ります。
+```js
+var sayHello = (num1, num2) => {
+    document.write("(" + num1 + ", " + num2 + ")");
+    document.write("<br />");
+}
+
+for (var i = 0; i < 5; i++) {
+  for (var j = 0; j < 5; j++) {
+    sayHello(i, j);
+  }
+}
+```
+
+### 引数の型
+
+また、引数には数値以外も指定できます。
+```js
+var sayHello = (name) => {
+    document.write("Hello, " + name + "!");
+    document.write("<br />");
+}
+
+sayHello("Alice");
+sayHello("Bob");
+```
+
+もちろん配列も引数に指定できます。
+```js
+var sayHello = (names) => {
+    for (var i = 0; i < names.length; i++) {
+        document.write("Hello, " + names[i] + "!");
+        document.write("<br />");
+    }
+}
+
+sayHello(["Alice", "Bob", "Charlie"]);
+```
+
+他と比べると使う機会は少ないかもしれませんが、関数も指定できます。
+```js
+var sayHello = (name, callback) => {
+    document.write("Hello, " + name + "!");
+    document.write("<br />");
+    callback();
+}
+
+sayHello("Alice", () => {
+    document.write("Nice to meet you!");
+    document.write("<br />");
+});
+```
+アロー関数で作った関数を引数に渡すことで、関数の中に任意の処理を移せます。
+このような、引数に渡す関数をコールバック関数といいます。
+
+## 戻り値
+
+### 概要
+次に、関数の戻り値についてです。まとめた処理の中で何かしら得た値を、関数の呼び出し元から使いたいというシーンで使います。
+```js
+var calcArea = (width, height) => {
+    return width * height;
+}
+
+function calcArea(width, height) {
+    return width * height;
+}
+```
+このように、`return 戻り値;`を使って関数の戻り値を指定します。この関数は、引数で渡された`width`と`height`を掛け算して、その結果(面積)を返します。
+
+関数の返す値を得るには、変数の部分を関数に置き換えるように記述します。
+```js
+document.write(calcArea(3, 4)); // 12
+```
+
+### return の順番
+
+関数の中で`return`が呼ばれると、その時点で関数の処理は終了します。そのため、`return`の後に処理を書いても実行されません。
+```js
+var calcArea = (width, height) => {
+    return width * height;
+    document.write("Hello, World!"); // この行は実行されません
+}
+```
+
+### 戻り値の型
+
+関数の返す値は、数値だけでなく、文字列や配列なども返すことができます。
+```js
+var getGreeting = (name) => {
+    return "Hello, " + name + "!";
+}
+
+var greeting = getGreeting("Alice");
+document.write(greeting); // "Hello, Alice!"
+```
+
+```js
+var getArray = (size) => {
+    var array = [];
+    for (var i = 0; i < size; i++) {
+        array.push(i);
+    }
+    return array;
+}
+
+var array = getArray(5); // [0, 1, 2, 3, 4]
+```
+
+<Tips>
+使う機会は本当に少ないかもしれませんが、関数を返す関数も作ることができます。このような関数を高階関数といいます。
+```js
+var getGreeter = (greeterName) => {
+    return (greeteeName) => {
+        return "I'm " + greeterName + ". Hello, " + greeteeName + "!";
+    }
+}
+
+document.write(getGreeter("Alice")("Bob")); // "I'm Alice. Hello, Bob!"
+
+var greeter = getGreeter("Bob");
+document.write(greeter("Alice")); // "I'm Bob. Hello, Alice!"
+document.write(greeter("Charlie")); // "I'm Bob. Hello, Charlie!"
+```
+</Tips>
+
+## 標準関数
+JavaScriptには、標準で用意されている関数がたくさんあります。
+ここでは、その中でもよく使う関数を紹介します。
+
+<Caution>
+この範囲は、以後特に断りなく講義内で使用されることがあります。
+
+すべて覚える必要はありません（どんなプログラマも、最初はIDEに頼ったり検索したりして、使っていくうちに自然に覚える場合が多いと思います）が、もしわからなくなった場合に、そんなことがあったなと心のどこかに留めておいてください。
+</Caution>
+
+### 文字列・配列操作
+また、一部のメソッドは、文字列にも配列にも使用することができます。
+
+#### slice
+`slice` メソッドは、指定した範囲の文字列・配列を取得するメソッドです。
+
+```js
+var array = ["hello", "world", "from", "mirrei", ".dev"];
+
+document.write(array.slice(1, 3));
+```
+
+例えばこの例で、`slice` メソッドには `1` と `3` を指定しています。
+
+第二引数に指定した `3` 番目である `"mirrei"` ですが、これは戻り値に含まれません。
+
+<Caution>
+先ほど「配列」で説明したように、配列は 0 番目から始まります。
+</Caution>
+
+よって、実行結果は以下のようになります。
+
+```js
+["world", "from"]
+```
+
+また、第二引数を省略すると、第一引数に指定したインデックスから最後まで、という意味になります。
+
+```js
+document.write("Tokyo Kosen".slice(2)); // kyo Kosen
+```
+
+文字列の場合は、以下のようになります。
+
+1文字ごとに、配列になっているようなイメージです。
+
+```js
+document.write("Tokyo Kosen".slice(2, 5)); // kyo
+```
+
+### 文字列操作
+
+#### toLowerCase / toUpperCase
+`toLowerCase` メソッドは、文字列を小文字に変換するメソッドです。
+指定する引数はありません。
+
+```js
+document.write("Tokyo Kosen".toLowerCase()); // tokyo kosen
+```
+
+同様に、`toUpperCase` メソッドは、文字列を大文字に変換するメソッドです。
+
+```js
+document.write("Tokyo Kosen".toUpperCase()); // TOKYO KOSEN
+```
+
+### 配列操作
+
+ここからは、残りの配列の標準メソッドを解説します。
+
+配列操作系の標準メソッドでは、配列の各要素に対してチェック・操作を適用したりするものが多いです。
+
+#### map
+`map`メソッドは、配列の各要素に対して、指定した関数を適用した新しい配列を作成します。
+```js
+var array = [1, 2, 3, 4, 5];
+var newArray = array.map((num) => {
+    return num * 2; // すべての要素に対してこの関数が適用される(1*2, 2*2, 3*2, ...)
+});
+document.write(newArray); // [2, 4, 6, 8, 10]
+```
+#### filter
+`filter`メソッドは、指定した条件を満たす要素だけを取り出した新しい配列を作成します。
+```js
+var array = [1, 2, 3, 4, 5];
+var newArray = array.filter((num) => {
+    return num % 2 === 0; // 偶数だけを取り出す
+});
+document.write(newArray); // [2, 4]
+```
+#### some
+`some`メソッドは、指定した条件を満たす要素が1つでもあれば`true`を返します。
+```js
+var array = [1, 2, 3, 4, 5];
+var isIncludesEven = array.some((num) => {
+    return num % 2 === 0; // 偶数が1つでもあればtrue
+});
+document.write(isIncludesEven); // true
+```
+#### every
+`every`メソッドは、すべての要素が指定した条件を満たす場合に`true`を返します。
+```js
+var array = [1, 2, 3, 4, 5];
+var isAllEven = array.every((num) => {
+    return num % 2 === 0; // すべての要素が偶数ならtrue
+});
+document.write(isAllEven); // false
+```
+
+### 遊んでみた
+
+これらのメソッドを使えば、こういうこともできますね。
+
+```js
+const TOKYO_KOSEN = "Tokyo Kosen";
+
+const kyo = TOKYO_KOSEN.slice(2, 5);
+const to = TOKYO_KOSEN.slice(0, 2).toLowerCase();
+const kosen = TOKYO_KOSEN.slice(6).toLowerCase();
+
+document.write(kyo + to + " " + kosen); // kyoto kosen
+```
+
+東京高専から、存在しない京都高専を生み出すことができました。
+何がしたかったんですかね
+
+余談ですが、「呪術廻戦」には架空の高専である「東京都立呪術高等専門学校」という高専が登場します。
+
+この作品では「呪術」を扱いますが、このようにキャラクターに何かしらの技術を要求される作品において、高専はとても使いやすいと思います。
+
+一次創作をしている高専生の方々、ぜひ高専をしれっと登場させてみませんか。
+知名度が少ないから、高校だとふんわり認識させられますよ。
+
+<Info>
+単位が危ないから、勉強苦手キャラは作りにくいかもしれないけどね
+</Info>
+
+## 課題
+<Assignment regulation='[["(=>|function)", "関数を定義する"], ["\\( *array, *num *\\)", "関数の引数を定義する"], ["array\\.filter *\\(", "配列の各要素の確認に filter メソッドを使用する"], ["(num)? *(<|>) *(num)?", "配列の各要素に対して検証を行う"], ["return +array", "関数の戻り値を配列にする"]]'>
+* 数字の配列 array と、数 num を渡せる関数を実装してください。
+* 関数では、渡された配列の各要素に対して、渡された数より小さいかどうかを確認する処理を、配列における filter 標準メソッドを使用して行ってください。
+* 関数の戻り値は、上記の条件に適合した要素の配列です。
+* つまり、array に `[0, 1, 3, 6, 8]`、num に `3` を渡すと、戻り値は `[0, 1]` であるということです。
+</Assignment>

@@ -1,0 +1,286 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第6回 非同期処理と発展
+description: 非同期処理と、発展した HTTP API の実装について学習します。
+written_by: Mirrei
+created_at: 2024-06-30 15:49:00
+updated_at: null
+parent: /meister/js/2024
+---
+
+import Assignment from "/src/components/Article/Assignment.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Info from "/src/components/Article/Info.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import Tips from "/src/components/Article/Tips.astro";
+
+## try-catch
+
+非同期処理の前に、try-catch 構文というエラーを検出できる構文を説明します。
+
+プログラムでは、いろいろな要因でエラーが発生します。
+例えば、以下のコードはエラーが発生します。
+
+```js
+var test = null;
+
+document.write(test.abc);
+```
+
+変数 `test` には `null` が代入されていますが、オブジェクト型だと勘違いしプロパティ `abc` を取得してしまっています。
+
+これは当然、エラーになります。
+`null` はオブジェクト型ではない（プロパティを持たない）特殊な型であるからです。
+
+<CaptionImage src="/attachments/meister/js/2024/6/type-error.webp" caption="存在しないプロパティを呼び出したときに起きる TypeError。" />
+
+### 基本構文
+
+try-catch 構文を使用すると、このエラーを検出し、プログラム的に処理することができます。
+構文は、以下のように記述します。
+
+```js
+try {
+    // NOTE: エラーが発生するかもしれない（try = やってみる）処理
+} catch {
+    // NOTE: エラーが発生した場合の処理
+}
+```
+
+また、catch 句では Error 型のエラーオブジェクトを受け取ることができます。
+
+```js
+try {
+    // NOTE: エラーが発生するかもしれない（try = やってみる）処理
+} catch (e) {
+    // NOTE: エラーが発生した場合の処理
+}
+```
+
+（`catch` が `catch (e)` になりました。引数 e を指定し、エラーを受け取っています）
+
+### finally 句
+
+また、finally 句という、エラーが起きても起きなくても最後に実行する、という意味のブロックを付け加えることもできます。
+
+finally 句は、単純に以下のように拡張します。
+
+```js
+try {
+    // NOTE: エラーが発生するかもしれない（try = やってみる）処理
+} catch (e) {
+    // NOTE: エラーが発生した場合の処理
+} finally {
+    // NOTE: try が正常終了して catch に入らなくても、エラーが出て catch に入っても、それぞれその後に実行される処理
+}
+```
+
+## 非同期処理（async）とは？
+
+非同期処理とは、CPU から見て長く待つ処理を待機している間、別の処理を行えるようにする仕組みです。
+
+例えば、インターネットからの情報の取得などは回線によって時間がかかります。
+人間から見ると数秒ですが、CPU は毎秒何億回という速度で処理を行っているため、かなり長い間処理ができないことになってしまいます。
+
+### 待機させる
+
+JavaScript の非同期処理は、標準状態で「時間のかかるタスクを待たない」ことになっています。
+まず、これを待つようなプログラムを作ってみましょう。
+
+ここでは、仮想的な非同期処理関数 `sleep` を使って説明します。
+この関数は、第一引数に秒数を指定することで、指定した秒数の間待機させることができるものとします。
+また、待機させた後の戻り値は `"Finished"` という文字列とします。
+
+<Info>
+「仮想的」なので、このコードは実際に動作しません。
+
+実際に動作させたい場合は、`sleep` 関数を以下のように定義することで動作させることができます。
+```js
+async function sleep(seconds) {
+    await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+    return "Finished";
+}
+```
+
+自分で使用されている `setTimeout` 関数を調べることでこのコードは理解することができると思います。
+余力があればやってみてください。
+</Info>
+
+`sleep` 関数を含む非同期処理関数は、すべて戻り値が `Promise` 型です。
+この `Promise` 型は「実行結果が非同期処理であり、作成時点ではまだ結果の値が確定していない」ことを示す型です。
+
+`Promise` を待機させるには await 構文を使用します。
+await 構文を使用するには、関数の前に「await」句を付けます。
+
+```js
+await sleep(1);
+```
+
+このコードを実行すると、`sleep` 関数が実行され、1秒待機されます。
+
+<Caution>
+ここで、`"Finished"` が戻り値だからと言って画面に `Finished` と表示されるわけではないことに注意してください。
+
+戻り値と画面出力は別の概念です。
+戻り値は、単純に関数でまとめた処理の結果を示すものであり、画面に出力するものではありません。
+</Caution>
+
+### 詳しい await 構文の仕様
+
+ですが、これでは実行の流れがつかみづらいと思います。
+そこで、以下のようにコードを変更してみます。
+
+```js
+document.write("Start");
+await sleep(1);
+document.write("End");
+```
+
+このコードを実行すると、まず最初に「Start」と表示されますが、「End」と表示されるのは1秒後です。
+
+#### await 文をつけない場合
+
+ここで、await 構文を使わないとどうなるのでしょうか。
+
+最初に以下のように記載しました。
+> JavaScript の非同期処理は、標準状態で「時間のかかるタスクを待たない」ことになっています。
+
+つまり、非同期処理を待つ構文である await 構文を使用しないと、待たずに次の処理を行います。
+
+```js
+document.write("Start");
+sleep(1);
+document.write("End");
+```
+
+この場合、「Start」と表示されたすぐ後に「End」と表示されます。
+
+### Promise について
+
+先ほど、`Promise` 型が存在すると説明しましたが、この `Promise` 型は await で待機する以外の使用方法もあります。
+
+`Promise` 型には以下のメソッドが実装されています。
+
+#### then メソッド
+
+then メソッドは、第一引数に関数を指定することができ、`Promise` が完了した（非同期処理が終了した）後の処理を指定することができます。
+
+例えば、例として `fetch` という関数を使用してみます。
+この `fetch` 関数は、完了すると `Response` 型になる `Promise` 型を返します。（`Response` 型については、今理解する必要はありません）（引数は省略しています）
+
+```js
+var r = await fetch();
+document.write(r.body);
+```
+
+then メソッドを使うと、以下のようになります。
+
+```js
+fetch().then(r => {
+    // NOTE: アロー関数の引数 r に Response 型のオブジェクトが格納される
+
+    document.write(r.body);
+});
+```
+
+要素が増えて少し見づらくなりましたが、これには利点があります。
+then メソッド自体が Promise を返すため、await のネスト（入れ子）地獄を緩和することができます。
+
+##### メリット: ネスト地獄の改善
+
+例えば、Response 型には json メソッドが存在します。
+このメソッドも Promise を返すため、await を使用しこの関数の結果を取得すると以下のようになります。
+
+```js
+var json_result = await (await fetch()).json();
+```
+
+await がカッコで囲まれており、大変見づらいです。
+処理の順番を追うことも少し難しくなります。
+
+then メソッドを使用すると、以下のように書き直せます。
+```js
+var json_result = await fetch().then(r => r.json());
+```
+
+どんどん then メソッドは連結できる（Promise 型に実装されているため）ので、このように長くなる場合は then メソッドでの連結のほうが見やすいことがよくあります。
+
+<Tips>
+とは言いつつ、
+```js
+const response = await (await fetch()).json();
+```
+ってよく書いてしまうのですが…
+</Tips>
+
+#### catch メソッド
+
+catch メソッドも、第一引数に関数を指定することができ、`Promise` が失敗した（非同期処理でエラーが発生した）後の処理を指定することができます。
+
+そもそも、非同期処理でエラーが発生するとどうなるのでしょうか。
+非同期処理は、await 構文を使用しない限り待機されません。
+待機されなかった非同期処理は「宙ぶらりん」の状態になり、どこからもアクセスできないので、エラーが起こると対処することができません。
+
+<Tips>
+対処できないことはありませんが、呼び出す部分を先ほど説明した try-catch 構文で覆ってもエラーを検出できません。
+</Tips>
+
+使用方法は then メソッドと同じです。
+第一引数に指定される関数は、 try-catch 構文の catch 句ブロックと同様です。
+
+```js
+await fetch().catch(e => {
+    // NOTE: エラーオブジェクトの引数 e を受け取ったり受け取らなかったり
+}).then(r => r.json());
+```
+
+### async キーワード
+
+関数に、以下のように async キーワードをつけると、戻り値が「もともとの型を返す Promise」となります。
+
+```js
+async function return_zero() {
+    return 0;
+}
+
+var arrow_function = async () => {
+    return 0;
+};
+```
+
+例えば、関数 `return_zero` を async キーワードをつけない以下のコードに変えます。
+
+```js
+function return_zero() {
+    return 0;
+}
+
+document.write(return_zero()); // 0
+```
+
+すると、戻り値は 0 です。
+これは、今までの講義の内容と全く一緒です。
+
+ですが、async キーワードをつけると Promise が返るようになっています。
+
+```js
+async function return_zero() {
+    return 0;
+}
+
+document.write(return_zero()); // [object Object]
+// NOTE: async をつけた（＝戻り値が Promise）ものは Promise で帰ってくる。
+// NOTE: Promise は await しないと中身の値を読み取ることができない。一般的に、実行時に値が確定していないものであるから。
+```
+
+## 今回のコース分岐項目
+
+### [バックエンド: 実践！Web APIを実装する](/meister/js/2024/6/backend)
+第5回(バックエンド)では、HTML ソースコード以外のファイルを送信してみました。
+この講義では、同じく第5回で学習した「API」を同じような方法で自分で実装し、サーバーから非同期でデータを取得するアプリケーションを実装することを目標にします。
+フロントエンドコースと連携すれば、モダン Web アプリケーションの基礎にもなる非同期通信を含む Web アプリケーションを実装できます。
+
+### [フロントエンド: 実践！Web アプリケーションを作成する](/meister/js/2024/6/frontend)
+第5回(フロントエンド)では、HTML および CSS を学習しました。
+HTML, CSS, JavaScript を用いることで、Web アプリケーションは十分に実装可能です。
+この講義では、Web アプリケーションを自分で作成することを目標にします。

@@ -1,0 +1,56 @@
+---
+import Card from "./Card.astro";
+
+interface Props {
+    touchable?: boolean;
+    style?: string;
+}
+---
+
+<Card classes={["example"]} color="#808080" style={`${!Astro.props.touchable ? "pointer-events:none;user-select:none;" : ""}${Astro.props.style ?? ""}`}>
+    <slot slot="content" />
+</Card>
+
+<style is:global>
+.card.example {
+    opacity: 1;
+    gap: 0px;
+    font-size: 1em;
+
+    padding: 1.5em;
+    padding-top: 3em;
+
+    position: relative;
+
+    &::before {
+        content: "サンプル";
+
+        position: absolute;
+        top: 0px;
+        left: 1em;
+        padding: 0.5em 1em;
+
+        line-height: 1;
+
+        background-color: #808080;
+        color: #ffffff;
+
+        border-bottom-left-radius: 0.5em;
+        border-bottom-right-radius: 0.5em;
+    }
+
+    :where(p) {
+        margin: 0px;
+    }
+
+    header {
+        display: none;
+    }
+}
+@media (prefers-color-scheme: dark) {
+    .example::before {
+        background-color: #ffffff;
+        color: #000000;
+    }
+}
+</style>

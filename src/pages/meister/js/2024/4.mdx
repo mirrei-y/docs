@@ -1,0 +1,515 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第4回 オブジェクト指向
+description: クラスなどのオブジェクト指向について学習します。
+written_by: Mirrei
+created_at: 2024-06-17 09:59:00
+updated_at: null
+parent: /meister/js/2024
+---
+
+import Assignment from "/src/components/Article/Assignment.astro";
+import Info from "/src/components/Article/Info.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import Tips from "/src/components/Article/Tips.astro";
+
+## オブジェクト指向とは
+
+オブジェクト指向とは、プログラムの構成要素をすべてオブジェクトに例える考え方のことをいいます。
+
+### 手続き型
+
+例えば、Cは「手続き型」の言語です。
+これは、オブジェクト指向とは反対の方向にあります。
+
+では、Cでファイル読み込みのコードを書いてみます。
+関数宣言や一部の変数宣言などは省略しています。
+
+```c
+fp = fopen("ファイル名", "r"); // NOTE: ファイルを開く
+
+if (fp != NULL) {
+    check = fgets(s, 100, fp);  // NOTE: ファイルから文字列読み込み
+
+    if (check != NULL) {
+        printf("%s", s); // NOTE: もし読み込めたら、読み込んだ文字列を出力
+    } else {
+        printf("\n"); // NOTE: もし読み込めなかった（すでにファイルを最後まで読み込み終わった）ら、改行を出力
+    }
+} else {
+    // NOTE: もし、ファイルが開けなかったら（ここでは省略）
+}
+
+fclose(fp); // NOTE: ファイルを閉じる
+```
+
+ここで重要なのは、`fopen`, `fgets`, `fclose` です。
+
+`fopen` でファイルを開いた結果の値（ファイルディスクリプタ）は、その後 `fgets`, `fclose` を実行する際にも指定されています。
+
+また、「開けなかった」、「読み込めなかった」などのエラーは、「NULL」という値と比較していることで検出しています。
+
+<Tips>
+`null` は、プログラミング言語において「値が存在しない」ことを表す値です。
+
+多少特異なものとして、`nil` や `nul` と記述する場合もあります。
+`None` とかいう気が狂ったような名前もあります。
+</Tips>
+
+<Tips>
+JavaScript では、`undefined` という `null` と似たような意味の型があります。
+これは値が存在しないのではなく、「そもそも定義づけされていない」ことを表す値です。
+
+`undefined` と `null` と `0` の違いは、[@pcb さんによるツイート](https://x.com/pcb/status/1478324098292133888)がわかりやすいので、気になる方はぜひ見てみてください。
+</Tips>
+
+### オブジェクト指向
+
+次に、同じ機能を持つオブジェクト指向型のプログラムを書いてみます。
+ここでは JavaScript をベースに記載しますが、オブジェクト指向をわかりやすくするため、実際には動作しないプログラムを書きます。
+
+```js
+try {
+    f = File.open("ファイル名", "r"); // NOTE: ファイルを開く
+
+    document.write(f.read()); // NOTE: ファイルから文字列を読み込み、出力
+
+    f.close(); // NOTE: ファイルを閉じる
+} catch {
+    // NOTE: もし、エラーが発生したら（ここでは省略）
+}
+```
+
+先ほどのコードより、少し単純になりました。
+
+重要なのは、呼んでいる関数です。
+先ほどは「ファイルを開く」「ファイルを読み込む」「ファイルを閉じる」の3つの動作をそれぞれ `fopen`, `fgets`, `fclose` で実装していました。
+しかし、オブジェクト指向型では、`File.open` で取得した値そのものである変数 `f` の名前が付いた `f.read`, `f.close` を使用しています。
+
+この利点は、操作の対象がより人間に対して明確になることです。
+手続き型で、関数名 `fgets` では「ファイルを読み込む」ことしか読み取れません。
+一方オブジェクト指向型では、関数名 `f.read` から「f のファイルを読み込む」ということを読み取れます。
+
+つまり、「何に」「何をする」という操作が、手続型より明確であるということです。
+
+## オブジェクト型
+
+### 概要
+
+JavaScript には、「オブジェクト型」という型があります。
+この型は、複数の変数（関数も含みます）を階層的にまとめることができ、これを利用すると「何に」「何をする」という操作が明確になるほか、「何に」が共通する関数をまとめるなどの用法もできます。
+
+まとまった変数は `.` で区切って呼び出すことができます。
+この、実際に呼び出すための最後の階層の名前をオブジェクトの中での**キー**といいます。
+
+今までに書いた `document.write` もこのオブジェクト型の恩恵を受けており、現在閲覧しているページに対して操作を行うことができる関数が、`document` というどこからでも使えるオブジェクト型変数にまとまっています。
+
+### 呼び出し
+
+`document.write` 以外の例も見てみましょう。
+
+`location` 標準オブジェクトは、現在閲覧中のページの URL などに対して操作を行うことができるオブジェクトです。
+
+* `location.reload` 関数を使用すると、ページを再読み込みできます。
+    ```js
+    location.reload();
+    ```
+
+* `location.href` 変数に URL の文字列を代入すると、別ページに移動できます。
+    ```js
+    location.href = "https://www.tokyo-ct.ac.jp";
+    ```
+
+また、 `Math` 標準オブジェクトを使用すると、計算に役立つ関数や変数を使用することができます。
+
+* `Math.floor` 関数を使用すると、数の切り捨てができます。
+    ```js
+    Math.floor(0.012345) // 0
+    ```
+
+* `Math.round` 関数を使用すると、数の四捨五入（丸め）ができます。
+    ```js
+    Math.round(3.5) // 4
+    ```
+
+* `Math.ceil` 関数を使用すると、数の切り上げができます。
+    ```js
+    Math.round(53.10003) // 54
+    ```
+
+* `Math.PI` 変数には、円周率が代入されています。
+    ```js
+    Math.PI // 3.141592653589793
+    ```
+
+* ほかにも、三角関数や対数関数を使用することができます。
+
+### 作成
+
+オブジェクト型は、`キー: 値` を、`,`（カンマ）で区切り、`{}`（波かっこ）で囲むことで、自分で作成することもできます。
+
+```js
+{
+    my_number: 12345,
+    sample_string: "sample string",
+    hello: () => {
+        document.write("Hello!");
+    }
+}
+```
+
+例えば、上の例のオブジェクトでは、アロー関数の記法で hello 関数を定義しています。
+
+この hello 関数を呼び出すには、以下のように記述します。
+
+```js
+var obj = { /* ... 省略 ... */ };
+
+obj.hello();
+```
+
+## クラス
+
+### 概要
+
+次に、オブジェクト型を派生させたクラスについて解説します。
+クラスという概念は、特定の動作をさせたいオブジェクトを、いくつも作成したいときに便利です。
+
+たい焼きを例に説明すると、たい焼きは、型に材料を入れてたい焼きを作ることで出来上がります。
+これは、クラスというたい焼きの型から、インスタンスと呼ばれるたい焼きを作っているようなものです。
+
+焼きあがったそれぞれのたい焼きは異なるものなので、それぞれに焦げ目の位置などの特徴が存在します。
+ですが、もともとのたい焼きの型は1つのみです。
+
+**この、一つの定義・複数の実態というオブジェクト指向の概念がクラスになります。**
+
+### クラスを定義する
+
+人間は歩いたり食べたり寝たり、ある程度共通の動作をします。
+これをシミュレーションするプログラムを作ると考えると、一人一人に歩く動作を一からプログラムするのはとても大変です。
+
+そのような場合にもクラスは有用です。
+以下のようにクラスとクラス内の関数（メソッドと呼ばれます）を**定義**します。
+
+```js
+class Human {
+
+    walk() {
+        document.write("歩きました");
+    }
+
+    eat(food) {
+        document.write(food + "を食べました");
+    }
+
+    sleep() {
+        document.write("寝ました");
+    }
+
+}
+```
+
+そして、この作成した `Human` クラスを**インスタンス化**します。
+
+```js
+var mirrei = new Human(); // NOTE: 新しい人間を作成（天下無双）
+```
+
+インスタンス化するには、`new クラス名()` という構文を使用します。
+
+たい焼きで例えると、材料を流し込んでたい焼きを焼く行為そのものです。
+完成したたい焼きを「インスタンス」と呼びます。
+
+すると、この `Human` クラスのインスタンスが格納された `mirrei` 変数は、先ほど説明したようにオブジェクトとして扱えます。
+
+```js
+mirrei.walk(); // NOTE: 「歩きました」と出力される
+```
+
+### クラスにプロパティを追加する
+
+また、人間はそれぞれ名前を持っています。
+その名前を格納する変数をクラスの中に作ることもできます。
+
+```js
+class Human {
+
+    name = "人間";
+    age = 1;
+
+    sayName() {
+        // NOTE: 後述
+    }
+
+    // ... 略 ...
+```
+
+この変数は**プロパティ**と呼びます。
+
+プロパティは、 `Human.name` のように呼び出すことはできません。
+しかし、インスタンスから変更することができ、変更した値はそのインスタンスのみで有効です。
+
+```js
+var mirrei = new Human();
+mirrei.name = "Mirrei";
+
+var onestep = new Human();
+onestep.name = "1Step621";
+```
+
+また、インスタンス内からは自分のインスタンスを特別な変数 `this` として使用することができます。
+
+例えば、この例でいうと「クラスに自分の名前を出力するメソッドを追加する」ときに、自分の名前を取得する必要があります。
+
+```js
+class Human {
+
+    name = "人間";
+    age = 1;
+
+    sayName() {
+        document.write(this.name);
+
+        // NOTE: this 自体が、インスタンスを指している
+    }
+
+    // ... 略 ...
+```
+
+### コンストラクタ
+
+コンストラクタは、クラスに「constructor」という名前のメソッドを定義しておくと、インスタンス化される際に呼び出される、という特徴を持つメソッドです。
+
+```js
+class Human {
+
+    // NOTE: プロパティは省略することも可能
+    name;
+
+    constructor(name) {
+        this.name = name;
+    }
+
+    // ... 略 ...
+```
+
+コンストラクタに引数を指定した場合は、インスタンス化する際に指定します。
+引数を複数作成することも可能です。
+
+```js
+var mirrei = new Human("Mirrei");
+// NOTE: この時点で、mirrei.name には Mirrei が代入されている
+```
+
+<Caution>
+コンストラクタは `return` によって値を返すことはできません。
+</Caution>
+
+### クラスを継承する
+
+クラスは、**継承**することができます。
+継承とは、もとのクラスから新しいクラスを作成することです。
+
+<Caution>
+クラスを新しく作るのであって、さきほどのインスタンスを作ることとは異なります。
+</Caution>
+
+継承は、**extends** キーワードを使用します。
+
+```js
+class Animal {
+
+    name = "動物";
+
+    constructor(name) {
+        this.name = name;
+    }
+
+    walk() {
+        document.write("歩きました");
+    }
+
+    eat(food) {
+        document.write(food + "を食べました");
+    }
+
+    sleep() {
+        document.write("寝ました");
+    }
+
+}
+
+class Human extends Animal {
+
+    name = "人間";
+    age = 1;
+
+    sayName() {
+        document.write(this.name);
+    }
+
+}
+```
+
+この例では、先ほどの `Human` クラスに対して、 `Animal` クラスを継承するように変更しました。
+また、`walk`、`eat`、`sleep` メソッドを `Animal` クラスに移動しました。
+
+この状態で、以下のように `Human` クラスのインスタンスから `walk` メソッドを呼び出すこともできます。
+`Human` クラスが `walk` メソッドのある `Animal` クラスを継承しているからです。
+
+```js
+var human = new Human();
+
+human.walk(); // 歩きました
+```
+
+#### メソッドをオーバーライドする
+
+例えば、上の例において、 `Animal` クラスを継承した `Human` クラスでもメソッドを上書きして記述したい場合があります。
+
+この上書きのことを「オーバーライド」といいます。
+オーバーライドには、特に構文等はありません。
+上書きしたいメソッドを、継承先（この場合では `Human` クラス）に書き込むだけとなります。
+
+以下の例では、`Animal` クラスを猫の概念とし、`sayName` メソッドを実行したときに鳴き声を出力するようにします。
+ただ、人間の概念である `Human` クラスの `sayName` メソッドでは鳴き声ではなく、名前を出力するようにします。
+
+```js
+class Animal {
+
+    constructor(name) {
+        this.name = name;
+    }
+
+    sayName() {
+        // NOTE: とりあえず、動物を猫とする
+        document.write("にゃん");
+    }
+
+    // ... 略 ...
+
+}
+
+class Human extends Animal {
+
+    sayName() {
+        // NOTE: Human.sayName を呼び出したときには名前を喋らせるようにする
+        document.write(this.name);
+    }
+
+    // ... 略 ...
+
+}
+
+new Animal("ねこ").sayName() // にゃん
+new Human("Mirrei").sayName() // Mirrei
+```
+
+#### 継承元のクラスを呼び出す
+
+ただもしかしたら、まれに<small>（VRChatとか……）</small>人間が「にゃん」と鳴くことがあったり、動物に原点回帰することがあるかもしれません。
+
+そのような「自分を継承元のクラスとして見た時のメソッド」を呼びたい時があります。
+もっとかみ砕くと、「人間から見て動物の sayName を実行したい」という状況です。
+
+そんな時は、`Human` クラス内で `super` という変数を使用します。
+この `super` 変数は、別のクラスを継承しているクラスのメソッドで使用することができ、継承元のクラスのメソッドがオブジェクト型（っぽく）入っています。
+
+```js
+class Human extends Animal {
+
+    sayName(isCat) {
+        // NOTE: Human.sayName を呼び出したときには名前を喋らせるようにする
+        document.write(this.name);
+
+        if (isCat) {
+            // NOTE: Animal クラスの sayName を実行する（「にゃん」と出力される）
+            super.sayName();
+        }
+    }
+
+    // ... 略 ...
+
+}
+
+new Human("Mirrei").sayName(true) // Mirreiにゃん
+```
+
+#### コンストラクタをオーバーライドする
+
+ではここで最後にオーバーライドの話に戻りますが、コンストラクタをオーバーライドするときには `super` を必ず必要とする、という制約があります。
+
+以下の例では、`this.name = name;` が共通しています。
+`Human` クラスのコンストラクタで、`Animal` クラスのコンストラクタを呼び出すと処理を共通化できます。
+
+```js
+class Animal {
+
+    constructor(name) {
+        this.name = name;
+    }
+
+    // ... 略 ...
+
+}
+
+class Human extends Animal {
+
+    constructor(name, age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    // ... 略 ...
+
+}
+```
+
+<Tips>
+処理の共通化を行うと、プログラムが読みやすくなったり、書き直す際にミスが少なくなったりします。
+
+ただし、無駄な共通化をするとかえって読みにくくなることもあります。
+今回の1文を共通化する例では、元のクラスをたどらなくてはいけなくなるため、必要はないかと思います。
+実際には適度に共通化をすることが大事です。
+</Tips>
+
+継承元のクラスのコンストラクタを呼び出すには、 `super.constructor` を使用する…と見せかけて `super` を関数として使用します。
+
+```js
+class Human extends Animal {
+
+    constructor(name, age) {
+        super(name); // NOTE: ここで、Animal クラスのコンストラクタを呼び出している
+        this.age = age;
+    }
+
+    // ... 略 ...
+
+}
+
+new Human("Mirrei").sayName() // Mirrei
+// NOTE: コンストラクタの共通する挙動を共通化することができた
+```
+
+## 課題
+<Assignment regulation='[["class Student *{", "Student クラスを定義する"], ["class JHSStudent extends Student *{", "JHSStudent クラスを定義する"], ["class HSStudent extends JHSStudent *{", "HSStudent クラスを定義する"], ["class KosenStudent extends JHSStudent *{", "KosenStudent クラスを定義する"], ["ability ?= ?0", "ability プロパティを実装する"], ["fail_classes ?= ?0", "fail_classes プロパティを実装する"], ["study *\\(hours\\) *\\{", "hours を引数に持つ study メソッドを実装する"], ["if *\\((\\d|hours)", "hours を比較する"], ["this\\.ability *\\+", "ability を加算する"], ["this\\.fail_classes *\\+", "fail_classes を加算する"], ["this\\.fail_classes *=", "fail_classes を 0 にする"], ["super\\.leave( *)", "継承元の leave メソッドを呼び出す"], ["this\\.ability *\\-", "ability から 2 を減算する"]]'>
+* 学生を定義する、`Student` クラスを定義してください。
+* 中学生を定義する、`JHSStudent` クラスを定義してください。なお、`Student` クラスを継承するものとします。
+* 高校生を定義する、`HSStudent` クラスを定義してください。なお、`JHSStudent` クラスを継承するものとします。
+* 高専生を定義する、`KosenStudent` クラスを定義してください。なお、 `JHSStudent` クラスを継承するものとします。
+* `Student` クラスに `ability` プロパティを実装してください。初期値は `0` とします。
+* `Student` クラスに `fail_classes` プロパティを実装してください。初期値は `0` とします。
+* `Student` クラスに `study` メソッドを実装してください。内容は以下に示します。
+    * 引数として、`hours` を受け取ります。
+    * もし、`hours` が 5 以上なら、そのインスタンスの `ability` を 1 加算します。
+    * もしそうでなければ、そのインスタンスの `fail_classes` を 1 加算します。
+* `JHSStudent` クラスに、 `leave` メソッドを定義してください。内容は以下に示します。
+    * そのインスタンスの `fail_classes` を 0 にします。
+* `KosenStudent` クラスに、 `study` メソッドを再定義（オーバーライド）してください。内容は以下に示します。
+    * 引数として、`hours` を受け取ります。
+    * もし、`hours` が 10 以上なら、そのインスタンスの `ability` を 2 加算します。
+    * もしそうでなければ、そのインスタンスの `fail_classes` を 1 加算します。
+* `KosenStudent` クラスに、 `leave` メソッドを再定義（オーバーライド）してください。内容は以下に示します。
+    * 継承元の leave メソッドを呼び出します。
+    * そのインスタンスの `ability` から 2 を減算します。
+</Assignment>
