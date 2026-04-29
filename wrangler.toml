@@ -1,5 +1,6 @@
 name = "mirrei-docs"
 compatibility_date = "2026-02-11"
+main = "dist/_worker.js/index.js"
 
 kv_namespaces = [
 	{ binding = "KV_FEEDBACK", id = "e478e68efd0b46c2b5e17145019d76bb" },
@@ -8,3 +9,4 @@ kv_namespaces = [
 
 [assets]
 directory = "./dist/"
+binding = "ASSETS"
