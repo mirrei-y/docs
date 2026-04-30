@@ -1,0 +1,96 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 404 Not Found
+description: ""
+written_by: null
+created_at: 2024-01-01 00:00:00
+updated_at: null
+parent: null
+---
+
+<style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho&display=swap');
+
+    main aside {
+        display: none;
+    }
+    main article {
+        margin-top: 0px;
+        line-height: 1.75;
+    }
+    .letter {
+        padding: 2.5em 3em;
+        margin: 3rem auto 0;
+        background-color: #fdfbf7;
+        border: 1px solid #e0d5c1;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.02), 2px 4px 10px rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+        font-family: "Shippori Mincho", "Noto Serif JP", serif;
+        color: #4a3e35;
+        position: relative;
+
+        &::before {
+            content: "";
+            position: absolute;
+            top: 10px; left: 10px; right: 10px; bottom: 10px;
+            border: 1px solid rgba(200, 190, 175, 0.4);
+            pointer-events: none;
+        }
+
+        h3 {
+            font-weight: normal;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 2rem;
+            color: #5a4b3c;
+            font-size: 1.25em;
+        }
+        p {
+            line-height: 2.1;
+            margin-bottom: 1.5em !important;
+            text-indent: 1em;
+
+            &:last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+        address {
+            margin-top: 1em;
+            text-align: right;
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .letter {
+            background-color: #24211e;
+            border-color: #443c34;
+            color: #d1c8bd;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2), 2px 4px 10px rgba(0, 0, 0, 0.4);
+
+            &::before {
+                border-color: rgba(209, 200, 189, 0.15);
+            }
+
+            h3 {
+                color: #e6dfd5;
+            }
+        }
+    }
+`}</style>
+
+## 404 Not Found
+
+**お探しのページは見つかりませんでした。**
+URL をご確認の上、再アクセスしてください。
+
+<div class="letter">
+    <h3>『存在の空白と探求』</h3>
+    <p>「見つからない」という事実は、存在の対極にある無、あるいは欠如を意識させます。</p>
+    <p>かつてそこに在ったかもしれない情報、繋がりかけたかもしれない知識へのアクセスが断たれる瞬間、私たちは世界の広大さと、その中でいかに多くのものが不可視の領域に留まっているかを痛感するのです。
+それは、知の地平線のかなたに消え去った何かを追い求める、孤独な探求者のようです。</p>
+    <p>インターネットは広大で、常に変化し続けている世界です。
+時には、迷子になってしまうこともあるかもしれませんが、それは冒険の一部と捉え、根気強く探してみるのもまた、インターネットの楽しみ方の一つなのかもしれません。</p>
+    <p>見つからないページに少しの寂しさを感じつつも、私たちはまた新しい情報との出会いを求めて、クリックを続けるのです。</p>
+
+    <address>- Gemini 2.0 Flash</address>
+</div>
