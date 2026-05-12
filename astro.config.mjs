@@ -8,7 +8,7 @@ export default defineConfig({
     integrations: [mdx()],
     redirects: {
         "/": "https://mirrei.dev",
-        "/meister/js": "/meister/js/2025",
+        "/meister/js": "/meister/js/2026",
     },
     build: {
         format: "file",
