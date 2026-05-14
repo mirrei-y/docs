@@ -170,6 +170,11 @@ form#assignment {
     text-align: center;
     border: 5px dotted #80808099;
     border-radius: 20px;
+    transition: border-color 0.2s;
+
+    &.dragging {
+        border-color: #6562bd;
+    }
 
     &:disabled {
         cursor: not-allowed;
@@ -316,9 +321,15 @@ form#assignment {
         };
         uploadButton.ondragover = evt => {
             evt.preventDefault();
+            formElement.classList.add("dragging");
+        };
+        uploadButton.ondragleave = evt => {
+            evt.preventDefault();
+            formElement.classList.remove("dragging");
         };
         uploadButton.ondrop = evt => {
             evt.preventDefault();
+            formElement.classList.remove("dragging");
             const file = evt.dataTransfer?.files?.[0];
             if (file) checkFile(file);
         };
