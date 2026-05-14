@@ -207,7 +207,7 @@ form#assignment {
         & > p {
             opacity: 0.5;
         }
-        button:not(.assignment-upload) {
+        button:not(:disabled) {
             border: 1px solid #6562bd;
         }
     }
@@ -293,6 +293,13 @@ form#assignment {
         }
     }
 
+    [data-type=failed] > button.assignment-upload {
+        border: 5px dotted #80808099;
+        border-radius: 20px;
+        padding: 3rem;
+        transition: border-color 0.2s;
+    }
+
     &[data-type=ready] > :not([data-type=ready]) {
         display: none;
     }
@@ -315,23 +322,28 @@ form#assignment {
     const uploadButtonElements = [...formElement.querySelectorAll<HTMLButtonElement>("button.assignment-upload")];
     const injecter = formElement.querySelector<HTMLInputElement>("input[name=injecter]")!.value;
     const asserter = formElement.querySelector<HTMLInputElement>("input[name=asserter]")!.value;
+
+    formElement.onclick = evt => {
+        if (evt.target === formElement) fileElement?.click();
+    };
+    formElement.ondragover = evt => {
+        evt.preventDefault();
+        formElement.classList.add("dragging");
+    };
+    formElement.ondragleave = evt => {
+        evt.preventDefault();
+        formElement.classList.remove("dragging");
+    };
+    formElement.ondrop = evt => {
+        evt.preventDefault();
+        formElement.classList.remove("dragging");
+        const file = evt.dataTransfer?.files?.[0];
+        if (file) checkFile(file);
+    };
+
     for (const uploadButton of uploadButtonElements) {
         uploadButton.onclick = evt => {
             if (evt.eventPhase !== evt.BUBBLING_PHASE) fileElement?.click();
-        };
-        uploadButton.ondragover = evt => {
-            evt.preventDefault();
-            formElement.classList.add("dragging");
-        };
-        uploadButton.ondragleave = evt => {
-            evt.preventDefault();
-            formElement.classList.remove("dragging");
-        };
-        uploadButton.ondrop = evt => {
-            evt.preventDefault();
-            formElement.classList.remove("dragging");
-            const file = evt.dataTransfer?.files?.[0];
-            if (file) checkFile(file);
         };
     }
     fileElement.onchange = () => {
