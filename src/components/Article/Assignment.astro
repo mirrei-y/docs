@@ -76,7 +76,7 @@ const isAvailable = typeof Astro.props.asserter === "function";
 <h3>チェックフォーム</h3>
 {isAvailable ?
 <form id="assignment" data-type="ready">
-    <input type="file" accept={accept ?? "text/javascript"}>
+    <input type="file" accept={accept ?? "*.js, *.mjs"}>
     <input type="hidden" name="injecter" value={injecter ?? ""}>
     <input type="hidden" name="asserter" value={asserter ?? ""}>
     <button type="button" class="assignment-upload" data-type="ready">
