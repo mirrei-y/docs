@@ -542,7 +542,7 @@ for (let i = 1; i <= 100; i++) {
 
         if (array[i - 1].toString() !== answer) return {
             ok: false,
-            message: `結果が正しくありません: array[${i - 1}] には ${answer} が期待されますが、${array[i]} が代入されています`,
+            message: `結果が正しくありません: array[${i - 1}] には ${answer} が期待されますが、${array[i - 1]} が代入されています`,
         }
     }
 
