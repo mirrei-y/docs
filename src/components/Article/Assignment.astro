@@ -79,7 +79,7 @@ const isAvailable = typeof Astro.props.asserter === "function";
     <input type="file" accept={accept ?? "text/javascript"}>
     <input type="hidden" name="injecter" value={injecter ?? ""}>
     <input type="hidden" name="asserter" value={asserter ?? ""}>
-    <button type="button" data-type="ready">
+    <button type="button" class="assignment-upload" data-type="ready">
         <header>
             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-upload" width="44" height="44" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M14 3v4a1 1 0 0 0 1 1h4" />
@@ -109,8 +109,19 @@ const isAvailable = typeof Astro.props.asserter === "function";
         <div class="controls">
             <pre class="feedback"></pre>
             <pre class="code"></pre>
-            <button type="button" class="retry">やり直す</button>
         </div>
+        <button type="button" class="assignment-upload" data-type="ready">
+            <header>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-upload" width="44" height="44" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                    <path d="M12 11v6" />
+                    <path d="M9.5 13.5l2.5 -2.5l2.5 2.5" />
+                </svg>
+                <b>ファイル未選択</b>
+            </header>
+            <p>やり直す場合はここをクリックして追加するか、ここにドロップしてください。</p>
+        </button>
     </div>
     <div data-type="complete">
         <header>
@@ -159,6 +170,11 @@ form#assignment {
     text-align: center;
     border: 5px dotted #80808099;
     border-radius: 20px;
+    transition: border-color 0.2s;
+
+    &.dragging {
+        border-color: #6562bd;
+    }
 
     &:disabled {
         cursor: not-allowed;
@@ -191,11 +207,11 @@ form#assignment {
         & > p {
             opacity: 0.5;
         }
-        button {
+        button:not(:disabled) {
             border: 1px solid #6562bd;
         }
     }
-    & > button {
+    button.assignment-upload {
         background: none;
         border: none;
         cursor: pointer;
@@ -277,6 +293,13 @@ form#assignment {
         }
     }
 
+    [data-type=failed] > button.assignment-upload {
+        border: 5px dotted #80808099;
+        border-radius: 20px;
+        padding: 3rem;
+        transition: border-color 0.2s;
+    }
+
     &[data-type=ready] > :not([data-type=ready]) {
         display: none;
     }
@@ -296,33 +319,41 @@ form#assignment {
     // NOTE: フォームを用意し、各種イベントを設定する
     const formElement = document.querySelector<HTMLFormElement>("#assignment")!;
     const fileElement = formElement.querySelector<HTMLInputElement>("input[type=file]")!;
-    const fileButtonElement = formElement.querySelector<HTMLButtonElement>("button[data-type=ready]")!;
-    const retryButtonElement = formElement.querySelector<HTMLButtonElement>("button.retry")!;
+    const uploadButtonElements = [...formElement.querySelectorAll<HTMLButtonElement>("button.assignment-upload")];
     const injecter = formElement.querySelector<HTMLInputElement>("input[name=injecter]")!.value;
     const asserter = formElement.querySelector<HTMLInputElement>("input[name=asserter]")!.value;
-    fileButtonElement.onclick = evt => {
-        if (evt.eventPhase !== evt.BUBBLING_PHASE) fileElement?.click();
+
+    formElement.onclick = evt => {
+        if (evt.target === formElement) fileElement?.click();
     };
-    fileButtonElement.ondragover = evt => {
+    formElement.ondragover = evt => {
         evt.preventDefault();
+        formElement.classList.add("dragging");
     };
-    fileButtonElement.ondrop = evt => {
+    formElement.ondragleave = evt => {
         evt.preventDefault();
+        formElement.classList.remove("dragging");
+    };
+    formElement.ondrop = evt => {
+        evt.preventDefault();
+        formElement.classList.remove("dragging");
         const file = evt.dataTransfer?.files?.[0];
         if (file) checkFile(file);
     };
+
+    for (const uploadButton of uploadButtonElements) {
+        uploadButton.onclick = evt => {
+            if (evt.eventPhase !== evt.BUBBLING_PHASE) fileElement?.click();
+        };
+    }
     fileElement.onchange = () => {
         const file = fileElement.files?.[0];
         if (file) checkFile(file);
     };
-    retryButtonElement.onclick = () => {
-        formElement.dataset.type = "ready";
-        fileButtonElement.disabled = false;
-    };
 
     // NOTE: 投げられたファイルをチェックする
     async function checkFile(file: File) {
-        fileButtonElement.disabled = true;
+        uploadButtonElements.forEach(b => { b.disabled = true; });
 
         // NOTE: ファイルを取得
         if (file.size > 1024 * 1024) return;
@@ -342,7 +373,7 @@ form#assignment {
             formElement.dataset.type = "complete";
         } else {
             formElement.dataset.type = "failed";
-            fileButtonElement.disabled = false;
+            uploadButtonElements.forEach(b => { b.disabled = false; });
 
             fetch("/api/meister/js/wrong-code", {
                 method: "POST",
