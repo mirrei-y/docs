@@ -1035,11 +1035,12 @@ li:first-child {
 <CaptionImage src="/attachments/meister/js/2026/4/pixel-painter.webp" caption="今回作成する予定のピクセルアートアプリのイメージ図。みんなでお絵描きしよう！" />
 
 以降の課題は 3 回に渡り同じ Web アプリケーションを作成・改良します。
-HTML ファイル内で [script 要素](#javascript-の埋め込み)を用いて、HTML および JavaScript を併せて書き込む形式となります。
+HTML ファイル内で style 要素・script 要素を用いて、HTML に CSS と JavaScript を併せて書き込む形式となります（ただし、今回の課題は JavaScript を使用しません）。
 
 ### キャンバスを作成する
 
 - 縦5つ、横5つの表を [table 要素](#table)で作成してください。
+    - [td 要素](#td) の中身は不要です。
 - [style 要素](#style-タグ)を用いて、以下の CSS を記述してください。
     - [table 要素](#table)の[幅](#width)を `max-content`、[高さ](#height)を `max-content` にしてください。
     - [td 要素](#td)の[幅](#width)を `10px`、[高さ](#height)を `10px` にしてください。
@@ -1088,3 +1089,4 @@ RGB 形式は、赤・緑・青の3色の値をそれぞれ16進数で表した�
 
 - 先ほどの div 要素に、span 要素を作成してください。
     - ID を任意に定めてください。
+    - これは任意ですが、先ほど作った input 要素の一つ前に置いておいたほうがいいです。
