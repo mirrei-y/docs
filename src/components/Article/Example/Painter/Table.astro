@@ -1,0 +1,38 @@
+---
+interface Props {
+    width?: number;
+    height?: number;
+}
+
+const width = Astro.props.width ?? 5;
+const height = Astro.props.height ?? 5;
+---
+
+<table class="example-painter-table">
+    { new Array(height).fill(<tr>
+        { new Array(width).fill(<td></td>) }
+    </tr>) }
+</table>
+
+<style is:global>
+.example-painter-table {
+    width: max-content;
+    height: max-content;
+    margin: 0px;
+}
+.example-painter-table td {
+    width: 10px;
+    height: 10px;
+    padding: 0px;
+    cursor: pointer;
+    background-color: #E0E0E0;
+}
+</style>
+
+<script>
+    document.querySelectorAll<HTMLElement>(".example-painter-table td").forEach(td => {
+        td.addEventListener("click", () => {
+            td.style.backgroundColor = "red";
+        });
+    });
+</script>

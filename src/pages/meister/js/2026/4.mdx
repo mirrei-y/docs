@@ -1,0 +1,1090 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第4回 HTML・CSS
+description: Web ページを記述する言語である HTML、および HTML の見た目を修飾する CSS について学習します。
+written_by: Mirrei
+created_at: 2026-06-14 18:34:42
+updated_at: null
+parent: /meister/js/2026
+---
+
+import Info from "/src/components/Article/Info.astro";
+import Tips from "/src/components/Article/Tips.astro";
+import Hint from "/src/components/Article/Hint.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import InlineImages from "/src/components/Article/InlineImages.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Assignment from "/src/components/Article/Assignment.astro";
+import Example from "/src/components/Article/Example.astro";
+import ExampleTable from "/src/components/Article/Example/Painter/Table.astro";
+
+## 今日は何をやるの？
+
+- Web ページを作るための言語「HTML」
+- HTML の見た目を変えるための言語「CSS」
+
+## HTML
+
+今回は、JavaScript から少し離れて、**Web ページを作る準備**に取り掛かることにします。
+Web ページを作るには、JavaScript ではなく、HTML というマークアップ言語を使用します。
+
+HTML は、Hypertext Markup Language の略で、Web ページの構造を決めるマークアップ言語です。
+文字列をタグ（書式は `<タグ名>...</タグ名>`）で囲み、タグはタグで再帰的に囲まれることで、Web ページの構造を表現しています。
+
+**拡張子は `.html` です**。
+以下、サンプルをファイルに保存してダブルクリックすると、ブラウザで実際に閲覧することができます。
+
+### サンプルとタグの基礎
+
+以下は、単純な HTML の例です。
+いくつかのタグで構成されていることがわかります。
+
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ページタイトル</title>
+    </head>
+    <body>
+        <h1>段落タイトル</h1>
+        <p>これは HTML の例です。</p>
+    </body>
+</html>
+```
+
+以降、紹介のため html タグや head タグを省略する場合があります。
+実際に HTML を書く際は、省略せず書くことを推奨します。
+
+<Info>
+`<!DOCTYPE html>` は最新バージョンの HTML を使用する宣言です。
+HTML を書くにあたってあまり重要ではないので、このような決まり事があるとだけ覚えておけばよいでしょう。
+</Info>
+
+#### html
+
+HTML は、すべてのタグが `<html>` タグで囲まれます。
+
+#### head
+
+ページタイトルが含まれている `<head>` タグは、ページの内容ではないものの、ページを表示するのに必要な情報をまとめるタグです。
+
+例では、`<title>` タグが含まれていますが、他にもページのアイコンを設定したり、JavaScript を読み込んだりするタグを挿入することができます。
+
+#### title
+
+ページのタイトルを設定するタグです。
+
+#### body
+
+実際に表示されるページの内容を決定する要素を囲むタグです。
+
+### 属性
+
+次に、以下のような HTML を見てみましょう。
+
+```html
+<!DOCTYPE html>
+<html lang="ja" dir="ltr">
+    <head>
+        <meta name="viewport" content="width=device-width">
+        <meta charset="utf-8">
+        <title>ページタイトル</title>
+    </head>
+    <body>
+        <h1 id="paragraph1">段落タイトル</h1>
+        <p>これは HTML の例です。</p>
+    </body>
+</html>
+```
+
+`<html>` タグに何やら文字が追加されました。
+`<head>` タグにも、`<meta>` タグが追加されています。
+
+タグには、このように**属性**が追加できます。
+**`属性名="内容"` という形で、タグに指定できます**。
+
+例えば、例の `<html>` タグには以下の属性が、
+
+| 属性 | 内容 |
+| - | - |
+| lang | ja |
+| dir | ltr |
+
+一つ目の `<meta>` タグには以下の属性がついています。
+
+| 属性 | 内容 |
+| - | - |
+| name | viewport |
+| content | width=device-width |
+
+#### id
+
+次回説明する JavaScript による DOM 操作、また今回説明する CSS による装飾を行う際、その要素を選択するため、**要素に ID を割り当てる**ことができます。
+
+```html
+<div id="your_custom_id_here"></div>
+
+<script>
+    document.querySelector("#your_custom_id_here") // DOM 操作を行いたい際、ID を使用する（querySelector については次回説明）
+</script>
+
+<style>
+    #your_custom_id_here {
+        /* CSS 装飾を行いたい際、ID を使用する */
+    }
+</style>
+```
+
+### タグ一覧
+
+タグは、他にもいろいろなものがあります。
+以下に代表的なタグの例を示します。
+
+#### h1～h6
+
+見出し（Heading）の意味で、文章の見出しを記述します。
+レベルが 1 から 6 まであり、大きな見出しは h1、その次の見出しは h2、…… といったように記述します。
+
+```html
+<h1>Heading 1</h1>
+<h2>Heading 2</h2>
+<h3>Heading 3</h3>
+<h4>Heading 4</h4>
+<h5>Heading 5</h5>
+<h6>Heading 6</h6>
+```
+
+<Example>
+    <p style="font-size:2em;font-weight:bold;">Heading 1</p>
+    <p style="font-size:1.5em;font-weight:bold;">Heading 2</p>
+    <p style="font-size:1.17em;font-weight:bold;">Heading 3</p>
+    <p style="font-size:1em;font-weight:bold;">Heading 4</p>
+    <p style="font-size:0.83em;font-weight:bold;">Heading 5</p>
+    <p style="font-size:0.67em;font-weight:bold;">Heading 6</p>
+</Example>
+
+このタグは、あくまで見出しを表現するためのものであり、**文字を大きくするために使用するべきではありません**。
+
+#### p
+
+段落（Paragraph）の意味で、通常文章がここに書かれます。
+ページで表示される文字を書くには、必ずしも p タグを挟まないといけないわけではありません。
+
+```html
+<p>これは1つ目の段落です。</p>
+<p>これは2つ目の段落です。</p>
+```
+
+<Example>
+    <p>これは1つ目の段落です。</p>
+    <p>これは2つ目の段落です。</p>
+</Example>
+
+#### div
+
+`<div>` タグは、ページ内のセクションをグループ化するために使用されます。
+
+```html
+<div style="background-color: lightblue;">
+    <p>これは <span style="color: red;">赤い文字</span> を含むセクションです。</p>
+</div>
+```
+
+<Example>
+    <div style="background-color: lightblue;">
+        <p>これは <span style="color: red;">赤い文字</span> を含むセクションです。</p>
+    </div>
+</Example>
+
+#### span
+
+`<span>` タグは、特定の部分を装飾するために使用されます。
+
+```html
+<p>これは <span style="color: red;">赤い文字</span> です。</p>
+```
+
+<Example>
+    <p>これは <span style="color: red;">赤い文字</span> です。</p>
+</Example>
+
+`<div>` タグとの違いについては、後ほど CSS の `display` プロパティのセクションで説明します。
+
+#### a
+
+`<a>` タグはリンクを表現するために使用されます。
+
+`href` 属性には、リンク先の URL を指定します。
+例えば、外部サイトへのリンクや、同じページ内の特定のセクションへのリンクを設定できます。
+
+同じページ内で、特定のセクションへのリンクを作るには、ID 属性を利用して、`#ID` という形式で指定します。
+
+```html
+<a href="https://example.com">リンクテキスト</a>
+<a href="#section1">ページ内リンク</a>
+```
+
+<Example>
+    <a href="https://example.com">リンクテキスト</a>
+    <a href="#section1">ページ内リンク</a>
+</Example>
+
+#### img
+
+`<img>` タグは画像を表示するために使用されます。
+
+`src` 属性には画像の URL を指定し、`alt` 属性には画像が表示されない場合（画像が存在しなかった場合など）の代替テキストを指定します。
+
+`width` 属性と `height` 属性で、画像が表示される幅・高さを設定することができます。
+指定していない場合、画面いっぱいに表示します。
+
+```html
+<img src="https://docs.mirrei.dev/images/face.webp" width="100" height="100" alt="説明文">
+```
+
+<Example>
+    <img src="/images/face.webp" width="100" height="100" alt="説明文" style="max-width:30vw;max-height:30vh" />
+</Example>
+
+#### ul, li
+
+`<ul>` タグは、順序なしリストを表現するために使用されます。
+`<li>` タグはそのリストの項目を表します。
+
+```html
+<ul>
+    <li>項目1</li>
+    <li>項目2</li>
+    <li>項目3</li>
+</ul>
+```
+
+<Example>
+    <ul>
+        <li>項目1</li>
+        <li>項目2</li>
+        <li>項目3</li>
+    </ul>
+</Example>
+
+#### input
+
+`<input>` タグは、ユーザーがデータを入力するためのフォーム要素を作成します。
+このタグは、終了タグ（`</input>`）を必要としません。
+
+type 属性で、以下のような入力の種類が設定できます。
+- text
+    <input type="text" />
+- password
+    <input type="password" />
+- checkbox
+    <input type="checkbox" />
+- radio
+    <input type="radio" />
+- file
+    <input type="file" />
+- color
+    <input type="color" />
+- range
+    <input type="range" />
+
+value 属性で、それぞれ初期値を指定します。
+
+```html
+<input type="text" placeholder="名前を入力してください" />
+<input type="password" placeholder="パスワードを入力してください" />
+```
+<Example touchable={true}>
+    <input type="text" placeholder="名前を入力してください" />
+    <input type="password" placeholder="パスワードを入力してください" />
+</Example>
+
+#### textarea
+
+`<textarea>` タグは、テキストを入力できる要素です。
+`<input type="text">` とは異なり、複数行のテキストを入力できることが特徴です。
+
+`rows` 属性で表示する行数、`cols` 属性で表示する横幅（文字数）を指定できます。
+
+```html
+<textarea rows="4" cols="40" placeholder="ご意見・ご感想を入力してください"></textarea>
+```
+
+<Example touchable={true}>
+    <textarea rows="4" cols="40" placeholder="ご意見・ご感想を入力してください"></textarea>
+</Example>
+
+要素の中に文字列を入れると、それが初期値となります。
+
+```html
+<textarea rows="4" cols="40" placeholder="ご意見・ご感想を入力してください">ドキュメントが分かりにくかったです。</textarea>
+```
+
+<Example touchable={true}>
+    <textarea rows="4" cols="40" placeholder="ご意見・ご感想を入力してください">ドキュメントが分かりにくかったです。</textarea>
+</Example>
+
+#### button
+
+`<button>` タグは、クリック可能なボタンを作成します。
+
+type 属性で、`submit`、`reset`、`button` を指定します。
+`submit` や `reset` では、`<form>` タグで囲った部分の `<input>` タグについて、フォームを送信したりリセットしたりできます。
+
+disabled 属性を指定すると、ボタンを無効化することができます。
+
+```html
+<button type="submit">送信</button>
+<button type="reset">リセット</button>
+```
+<Example touchable={true}>
+    <button type="submit">送信</button>
+    <button type="reset">リセット</button>
+</Example>
+
+#### strong, b
+
+`<strong>` タグは重要なテキストを強調するために使用されます。
+`<b>` タグは単に太字を表現します。
+
+```html
+<p><strong>重要なテキスト</strong>と<b>太字のテキスト</b></p>
+```
+
+<Example>
+    <p><strong>重要なテキスト</strong>と<b>太字のテキスト</b></p>
+</Example>
+
+#### del, s
+
+`<del>` タグは削除されたテキストを表現します。
+`<s>` タグも同様に取り消し線を表現します。
+
+```html
+<p><del>削除されたテキスト</del>と<s>取り消し線のテキスト</s></p>
+```
+
+<Example>
+    <p><del>削除されたテキスト</del>と<s>取り消し線のテキスト</s></p>
+</Example>
+
+#### table
+
+`<table>` タグは、表を作成するために使用されます。
+
+`<table>` 内で使用される特別なタグとして、`<tr>` と `<td>` があります。
+`<tr>` タグは表の行を表し、`<td>` タグは表のセルを表します。
+
+```html
+<table>
+    <tr>
+        <td>セル1</td>
+        <td>セル2</td>
+        <td>セル3</td>
+    </tr>
+    <tr>
+        <td>セル4</td>
+        <td>セル5</td>
+        <td>セル6</td>
+    </tr>
+</table>
+```
+
+<Example>
+    <table>
+        <tr>
+            <td style="background-color: transparent;">セル1</td>
+            <td style="background-color: transparent;">セル2</td>
+            <td style="background-color: transparent;">セル3</td>
+        </tr>
+        <tr>
+            <td style="background-color: transparent;">セル4</td>
+            <td style="background-color: transparent;">セル5</td>
+            <td style="background-color: transparent;">セル6</td>
+        </tr>
+    </table>
+</Example>
+
+`border` 属性を指定すると、表に枠線をつけることができます。
+枠線の幅をピクセル単位で指定します。
+
+```html
+<table border="1">
+    <tr>
+        <td>セル1</td>
+        <td>セル2</td>
+        <td>セル3</td>
+    </tr>
+    <tr>
+        <td>セル4</td>
+        <td>セル5</td>
+        <td>セル6</td>
+    </tr>
+</table>
+```
+
+<Example>
+    <table border="1">
+        <tr>
+            <td>セル1</td>
+            <td>セル2</td>
+            <td>セル3</td>
+        </tr>
+        <tr>
+            <td>セル4</td>
+            <td>セル5</td>
+            <td>セル6</td>
+        </tr>
+    </table>
+</Example>
+
+### 実際の DOM ツリーを見る
+
+実際に、この Web ページのタグを見てみましょう。
+適当な場所を右クリックして、メニューから「検証」または「要素を検証」、「調査」、「開発者ツールで調査する」などの項目をクリックします。
+
+「要素」や「DOM」、「インスペクタ」などの名前がついているタブをクリックすると、HTML を覗くことができます。
+これを DOM ツリーと言い、どの Web サイトでもこのような DOM ツリーを見ることができます。
+
+<CaptionImage src="/attachments/meister/js/2025/5/devtools.webp" caption="Google Chrome の DevTools 画面。" />
+
+カーソルを要素に当てると、対応する要素がハイライト表示されます。
+
+### コメント
+
+HTML にもコメントを埋め込めます。
+
+```html
+<body>
+    <p>Hello world<!-- but this is comment tag -->!</p>
+</body>
+```
+
+`<!--` と `-->` で囲った部分がコメントになります。
+
+## CSS
+
+HTML は、**CSS** (Cascading Style Sheets) を付加することができます。
+
+これは、HTML 要素に文字色や背景色をはじめ、様々な効果（スタイル）をつけることができる言語です。
+
+HTML 要素に対し CSS を埋め込むには、後ほど説明する `<style>` タグを使用するか、`style` 属性を使用します。
+
+### コメント
+
+CSS のコメントは、JavaScript で複数行をコメントアウトするのに使用する構文「`/* */`」を使用します。
+
+単一行をコメントアウトする構文「`//`」は使用できない他、`style` 属性にも使用することはできません。
+
+### プロパティ
+
+CSS では、**プロパティ**で装飾を行います。
+
+プロパティは、`プロパティ: 値;` という形式で設定します。
+
+#### color
+
+文字色を設定するプロパティです。
+CSS において色は、RGB 形式（`#abcdef`）で指定することが多いです。
+
+```html
+<p style="color: #ff0000;">Hello world!</p>
+```
+
+<Example>
+    <p style="color: #ff0000;">Hello world!</p>
+</Example>
+
+#### background-color
+
+背景色を設定するプロパティです。
+
+```html
+<p style="background-color: #ff0000; color: #ffff00;">Hello world!</p>
+```
+
+<Example>
+    <p style="background-color: #ff0000; color: #ffff00;">Hello world!</p>
+</Example>
+
+#### font-size
+
+文字のサイズを設定するプロパティです。
+
+`12px` のようなピクセル数指定、`1.5em` のようなデフォルト文字サイズからの相対サイズ指定、`2cm` のような物理的なサイズ指定などが扱えます。
+
+```html
+<p style="font-size: 1.5em;">Hello world!</p>
+```
+
+<Example>
+    <p style="font-size: 1.5em;">Hello world!</p>
+</Example>
+
+#### font-weight
+
+文字の太さを設定するプロパティです。
+
+`normal`（標準）、`bold`（太字）、または `100` から `900` までの数値で指定できます。
+
+```html
+<p style="font-weight: bold;">Hello world!</p>
+```
+
+<Example>
+    <p style="font-weight: bold;">Hello world!</p>
+</Example>
+
+HTML ページ内の文章を強調したいときには、このプロパティではなく `<b>` タグや `<strong>` タグを使用するべきです。
+
+#### text-align
+
+文字の配置を設定するプロパティです。
+
+`left`（左揃え）、`center`（中央揃え）、`right`（右揃え）、`justify`（両端揃え）などの値を指定できます。
+
+```html
+<p style="text-align: center;">Hello world!</p>
+```
+
+<Example>
+    <p style="text-align: center;">Hello world!</p>
+</Example>
+
+#### text-decoration
+
+文字の装飾を設定するプロパティです。
+`none`（装飾なし）、`underline`（下線）、`overline`（上線）、`line-through`（取り消し線）などの値を指定できます。
+
+```html
+<p style="text-decoration: underline;">Hello world!</p>
+```
+
+<Example>
+    <p style="text-decoration: underline;">Hello world!</p>
+</Example>
+
+#### opacity
+
+透明度を設定するプロパティです。
+
+0～1 の間の数値で設定します。
+
+```html
+<p style="opacity: 0.3;">Hello world!</p>
+```
+
+<Example>
+    <p style="opacity: 0.3;">Hello world!</p>
+</Example>
+
+#### display
+
+要素の表示方法を設定するプロパティです。
+`none`（表示しない）、`block`（ブロック要素）、`inline`（インライン要素）、`inline-block`（インラインブロック要素）、`flex`（フレックスボックス）、`grid`（グリッドレイアウト）などの値を指定できます。
+
+ブロック要素として表示すると、要素は幅と高さを持った領域として描画されます。
+インライン要素として表示すると、要素は Word のテキストのように、ある程度幅と高さを自動的に決定し描画されます。
+
+要素にはデフォルトの表示方法がそれぞれあります。
+このプロパティを指定しない場合、以下のような方法で表示されるようになっています。
+
+| 要素 | デフォルトの表示方法 |
+| - | - |
+| `<h1>` | `block` |
+| `<div>` | `block` |
+| `<p>` | `block` |
+| `<span>` | `inline` |
+| `<img>` | `inline` |
+
+`background-color` プロパティを使用して、背景色を設定してみると違いが分かりやすくなります。
+
+```html
+<!-- ブロック要素 -->
+<p style="background-color: #ffaaaa;">Hello</p>
+<p style="background-color: #ffffaa;">World</p>
+
+<p style="background-color: #aaaaff; display: inline;">Hello</p>
+<p style="background-color: #aaffaa; display: inline;">World</p>
+
+<p style="background-color: #aaffff; display: none;">これは表示されないテキストです</p>
+```
+
+<Example>
+    <div>
+        <p style="background-color: #ffaaaa;">Hello</p>
+        <p style="background-color: #ffffaa;">World</p>
+        <p style="background-color: #aaaaff; display: inline;">Hello</p>
+        <p style="background-color: #aaffaa; display: inline;">World</p>
+    </div>
+</Example>
+
+<Tips>
+フレックスボックス（`flex`）はとても便利な表示方法です。
+説明すると長くなってしまいますが、ブロック要素を縦横好きなように並べたり、溢れる場合に折り返してくれたり、まさにフレキシブルにレイアウトを設定できます。
+</Tips>
+
+#### position
+
+要素の位置を設定するプロパティです。
+デフォルトでは、通常の Web ページのように上から下へ配置されますが、`position` プロパティを使用して配置の方法を変更し、`top`, `left`, `right`, `bottom` プロパティを使用してどこに配置するか決定します。
+
+| `position` プロパティの値 | 意味 |
+| - | - |
+| `absolute` | 親要素左上からの絶対位置 |
+| `relative` | もともと配置されるはずだった場所からの相対位置 |
+| `fixed` | 画面左上からの位置 |
+
+```html
+<!-- button 要素は、右から 20px、上から 0px の位置に配置される -->
+<button style="position: absolute; right: 20px; top: 0px; background-color: #ffaaaa;">ボタン</button>
+```
+
+<Example>
+    <button style="position: absolute; right: 20px; top: 0px; background-color: #ffaaaa;">ボタン</button>
+</Example>
+
+#### その他
+
+以前紹介した MDN ドキュメントにも、CSS プロパティのリストが掲載されています: [MDN ドキュメント - CSS リファレンス](https://developer.mozilla.org/ja/docs/Web/CSS/Reference#%E7%B4%A2%E5%BC%95)
+
+`border` や `border-radius`、`box-shadow` や `filter` など、いろいろな効果を持つプロパティがあります。
+
+### style タグ
+
+ところで、HTML 要素それぞれに対して `style` 属性を設定するのは大変です。
+HTML に `<style>` タグを書くことで、一つの CSS コードで複数の要素に対して見た目を設定することができます。
+
+本講義では、`<head>` タグ内に `<style>` タグを書くことを推奨します（実際、このページも `<head>` タグ内に `<style>` タグを記載しています）。
+
+```html
+<head>
+    <style>
+        body {
+            background-color: #fbefdd;
+            color: red;
+            font-weight: bold;
+        }
+        span {
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    Hello world<span>, CSS</span>!
+</body>
+```
+
+<Example style="background-color:#fbefdd">
+    <p style="color:red;font-weight:bold">Hello world<span style="color: black;">, CSS</span>!</p>
+</Example>
+
+内部では後述する**セレクタ**を使用した方法で、要素を選び、装飾をつけます。
+
+### 単純セレクタ
+
+要素を指定するのは、**セレクタ**を使用します。
+
+セレクタと、セレクタで選択した要素に対して装飾を行うには、以下のように記述します。
+
+```
+セレクタ {
+    プロパティ: 値;
+}
+```
+
+#### HTML 要素
+
+ごく単純な CSS セレクタで、指定された HTML の要素すべてを選択します。
+
+```css
+body {
+    /* 略 */
+}
+```
+
+#### ID
+
+一つの HTML 要素に対して ID をつけて、その要素に CSS を適用するセレクタです。
+
+まず、最初に `id` 属性で要素に任意の ID を割り当てておきます。
+
+```html
+<p id="paragraph1">Hello world!</p>
+```
+
+すると、`#ID` という形式で、ID を用いた要素の選択が可能になります。
+
+```css
+#paragraph1 {
+    color: red;
+}
+```
+
+<Example>
+    <p style="color:red">Hello world!</p>
+</Example>
+
+#### クラス
+
+先ほどの ID 属性は、「HTML ページ中で一つのみ」という制約があります。
+
+CSS における**クラス**は、ID と同様に要素に付けるラベルのようなものです。
+これは ID と異なり、複数の要素に同じクラスをつけることができ、また一つの要素に複数のクラスをつけることができます。
+
+<Hint>
+JavaScript における「クラス」とは異なります。
+</Hint>
+
+最初に `class` 属性で、要素に任意のクラスを割り当てておきます。
+この時、複数のクラスを指定したい場合は、スペース区切りで指定できます。
+
+```html
+<p class="header red">JavaScript を動かせる環境</p>
+<p>
+    一般的な言語には、<span class="red">コンパイル方式</span>と<span class="red">インタプリタ方式</span>という2種類の方式がある
+</p>
+<p>
+    後者は特に<span class="red">プログラムを実行するためのプログラム</span>が必要
+</p>
+<p>
+    このプログラムのことを、<span class="red">ランタイム</span>と呼ぶ
+</p>
+```
+
+その後、CSS では `.クラス名` という形式で、そのクラスが割り当てられている要素の選択が可能になります。
+
+```css
+.header {
+    font-size: 1.5em;
+}
+.red {
+    color: red;
+}
+```
+
+<Example>
+    <p style="font-size:1.5em;color:red">JavaScript を動かせる環境</p>
+    <p>一般的な言語には、<span style="color:red">コンパイル方式</span>と<span style="color:red">インタプリタ方式</span>という2種類の方式がある</p>
+    <p>後者は特に<span style="color:red">プログラムを実行するためのプログラム</span>が必要</p>
+    <p>このプログラムのことを、<span style="color:red">ランタイム</span>と呼ぶ</p>
+</Example>
+
+#### 全称セレクタ
+
+`*` を使用することで、「すべての HTML 要素」を選択することができます。
+
+```css
+* { /* すべての要素に対して、行の高さを 1 に設定 */
+    line-height: 1;
+}
+```
+
+これは、のちに説明する複合セレクタを用いる際に有用です。
+
+### 複合セレクタ
+
+これらの単純セレクタを組み合わせることもでき、単純セレクタを直接文字列をつなげることで実装できます。
+
+```css
+h2.header {
+    /* header クラスがついた h2 要素であるとき */
+}
+.red#important-1 {
+    /* red クラスがついていて、ID が important-1 である場合 */
+}
+```
+
+### 結合子
+
+CSS では、先ほどまでに紹介したセレクタに対して、それと関連する別要素を選択することができます。
+
+ここでいう別要素を選択するというのは、例えば「選択した要素の子要素」や、「選択した要素の次の要素」などが当てはまります。
+
+#### 子孫結合子
+
+セレクタ同士をスペースで区切ることで、「その要素の中にある」を表現できます。
+
+```html
+<div class="news">
+    <p>2025.06.23: ページを更新しました。</p>
+</div>
+<div class="news">
+    <p>2025.06.22: 今日のご飯はカレーでした。</p>
+    <p><span class="del">未だに甘口じゃないと食べられません</span>。</p>
+    <div>
+        <span>リンク:</span>
+        <p><a href="...">今日の日記はこちら</a></p>
+    </div>
+</div>
+```
+```css
+.news p { /* news クラス要素の中の、p 要素 */
+    color: red;
+}
+.news .del { /* news クラス要素の中の、del クラス */
+    text-decoration: line-through;
+}
+```
+
+<Example>
+    <div>
+        <p style="color:red">2025.06.23: ページを更新しました。</p>
+    </div>
+    <div>
+        <p style="color:red">2025.06.22: 今日のご飯はカレーでした。</p>
+        <p style="color:red"><s>未だに甘口じゃないと食べられません</s>。</p>
+        <div>
+            <span>リンク:</span>
+            <p style="color:red"><a href="#">今日の日記はこちら</a></p>
+        </div>
+    </div>
+</Example>
+
+#### 子結合子
+
+セレクタ同士を大なり記号 `>` で区切ることで、「その要素の直下の」を表現できます。
+
+前後にスペースが入っても、子孫結合子とはみなされません。
+
+```html
+<div class="news">
+    <p>2025.06.21: C言語の学習を始めました。</p>
+    <a href="...">C言語について</a>
+</div>
+<div class="news">
+    <p>2025.06.20: <a href="...">今日の更新はお休みです</a>。</p>
+</div>
+```
+```css
+.news > p { /* news クラス要素の直下の p 要素 */
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+```
+
+<Example>
+    <div>
+        <p>2025.06.21: C言語の学習を始めました。</p>
+        <a style="font-size:0.8em;opacity:0.8" href="#">C言語について</a>
+    </div>
+    <div>
+        <p>2025.06.20: <a href="#">今日の更新はお休みです</a>。</p>
+    </div>
+</Example>
+
+#### 次兄弟結合子
+
+セレクタ同士をプラス記号 `+` で区切ることで、「その要素の直後の」を表現できます。
+
+```html
+<p class="title">C言語の学習を始めました</p>
+<p>2025.06.21</p>
+<a href="...">トップページに戻る</a>
+<p>2年生になり、プログラミング言語の授業が始まったので、</p>
+<p>自分でもプログラミングの勉強をしてみることにしました。</p>
+<a href="...">使用している教科書はこのリンクから見れます。</a>
+```
+```css
+.title + p { /* title クラス要素の直後の p 要素 */
+    font-size: 0.8em;
+}
+```
+
+<Example>
+    <p>C言語の学習を始めました</p>
+    <p style="font-size:0.8em">2025.06.21</p>
+    <a href="#">トップページに戻る</a>
+    <p>2年生になり、プログラミング言語の授業が始まったので、</p>
+    <p>自分でもプログラミングの勉強をしてみることにしました。</p>
+    <a href="#">使用している教科書はこのリンクから見れます。</a>
+</Example>
+
+#### 後続兄弟結合子
+
+セレクタ同士をプラス記号 `~` で区切ることで、「その要素の後の」を表現できます。
+
+先ほどの「次兄弟結合子（`+`）」と異なる点は、直後ではないため、複数の HTML 要素に適用されることです。
+間に別の要素が挟まっても適用されます。
+
+```html
+<p class="title">C言語の学習を始めました</p>
+<p>2025.06.21</p>
+<a href="...">トップページに戻る</a>
+<p>2年生になり、プログラミング言語の授業が始まったので、</p>
+<p>自分でもプログラミングの勉強をしてみることにしました。</p>
+<a href="...">使用している教科書はこのリンクから見れます。</a>
+```
+```css
+.title + p { /* title クラス要素の直後の p 要素 */
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+.title ~ a { /* title クラス要素の後の a 要素 */
+    font-size: 0.8em;
+}
+```
+
+<Example>
+    <p>C言語の学習を始めました</p>
+    <p style="font-size:0.8em;opacity:0.8">2025.06.21</p>
+    <a style="font-size:0.8em" href="#">トップページに戻る</a>
+    <p>2年生になり、プログラミング言語の授業が始まったので、</p>
+    <p>自分でもプログラミングの勉強をしてみることにしました。</p>
+    <a style="font-size:0.8em" href="#">使用している教科書はこのリンクから見れます。</a>
+</Example>
+
+### 疑似クラス
+
+CSS では、要素に対して特定の状態の場合にのみ状態を適用できる、**疑似クラス**という概念があります。
+
+例えば、リンクのホバー（マウスを乗せる）時やクリック時などを指す疑似クラスがあります。
+
+#### :hover
+
+選択している要素がホバーされた（マウスを乗せられた）ときに選択される疑似クラスです。
+
+```html
+<p>リンク集</p>
+<a href="https://google.com">Google</a>
+<a href="https://yahoo.co.jp">Yahoo!</a>
+<a href="https://bing.com">Bing</a>
+```
+
+```css
+a:hover {
+    background-color: #0000ff;
+    color: #ffffff;
+}
+```
+
+<Example touchable={true}>
+    <p id="example01">リンク集</p>
+    <a class="example01" href="#example01" onclick="e=>e.preventDefault()">Google</a>
+    <a class="example01" href="#example01" onclick="e=>e.preventDefault()">Yahoo!</a>
+    <a class="example01" href="#example01" onclick="e=>e.preventDefault()">Bing</a>
+    <style>.example01:hover\{background-color:#0000ff;color:#ffffff;\}</style>
+</Example>
+
+#### :active
+
+選択している要素がクリックされているときに選択される疑似クラスです。
+
+```html
+<p>リンク集</p>
+<a href="https://google.com">Google</a>
+<a href="https://yahoo.co.jp">Yahoo!</a>
+<a href="https://bing.com">Bing</a>
+```
+
+```css
+a:hover {
+    background-color: #0000ff;
+    color: #ffffff;
+}
+a:active {
+    background-color: #ff0000;
+    color: #ffff00;
+}
+```
+
+<Example touchable={true}>
+    <p id="example02">リンク集</p>
+    <a class="example01 example02" href="#example02" onclick="e=>e.preventDefault()">Google</a>
+    <a class="example01 example02" href="#example02" onclick="e=>e.preventDefault()">Yahoo!</a>
+    <a class="example01 example02" href="#example02" onclick="e=>e.preventDefault()">Bing</a>
+    <style>.example02:active\{background-color:#ff0000;color:#ffff00;\}</style>
+</Example>
+
+#### :first-child
+
+`:first-child` 疑似クラスは、選択した要素の最初の子要素を選択するために使用されます。
+
+```html
+<ul>
+    <li>最初の項目</li>
+    <li>2番目の項目</li>
+    <li>3番目の項目</li>
+</ul>
+```
+
+```css
+li:first-child {
+    color: red;
+}
+```
+
+<Example>
+    <ul>
+        <li style="color: red;">最初の項目</li>
+        <li>2番目の項目</li>
+        <li>3番目の項目</li>
+    </ul>
+</Example>
+
+## 課題
+
+<Info>
+今回の課題は、自動チェックはありません。
+このページに記載されたすべての課題が終了後、TA に直接確認してもらってください。
+</Info>
+
+今回から最終回までは、みんなで一つの巨大なキャンバスに書き込めるピクセルアートアプリを作成します。
+これは Reddit による [r/place](https://www.reddit.com/r/place) や、[Wplace](https://wplace.live) と同じようなものです。
+
+<CaptionImage src="/attachments/meister/js/2026/4/pixel-painter.webp" caption="今回作成する予定のピクセルアートアプリのイメージ図。みんなでお絵描きしよう！" />
+
+以降の課題は 3 回に渡り同じ Web アプリケーションを作成・改良します。
+HTML ファイル内で [script 要素](#javascript-の埋め込み)を用いて、HTML および JavaScript を併せて書き込む形式となります。
+
+### キャンバスを作成する
+
+- 縦5つ、横5つの表を [table 要素](#table)で作成してください。
+- [style 要素](#style-タグ)を用いて、以下の CSS を記述してください。
+    - [table 要素](#table)の[幅](#width)を `max-content`、[高さ](#height)を `max-content` にしてください。
+    - [td 要素](#td)の[幅](#width)を `10px`、[高さ](#height)を `10px` にしてください。
+    - [td 要素](#td)の[背景色](#background-color)を薄い灰色（`#E0E0E0`）にしてください。
+    - [table 要素](#table) の `margin` を `0px` にしてください。
+    - [td 要素](#td) の `padding` を `0px` にしてください。
+    - [td 要素](#td) の `cursor` を `pointer` にしてください。
+
+<Example>
+    <ExampleTable />
+</Example>
+
+<Tips>
+`width` に指定している `10px` は、10 ピクセルを意味します。
+一方で `max-content` は、内容に合わせて幅を自動で調整することを意味します。
+その他、`auto` や `100%` など、様々な値を指定できますが、今回は `max-content` を指定してください。
+</Tips>
+
+<Tips>
+`background-color` に指定している `#E0E0E0` は、RGB 形式で表された色のコードです。
+RGB 形式は、赤・緑・青の3色の値をそれぞれ16進数で表したもので、`#RRGGBB` という形式で表されます。
+`#E0E0E0` は、赤・緑・青がすべて `E0` であるため、薄い灰色になります。
+</Tips>
+
+<Tips>
+`margin`, `padding` は、ブラウザが初期値を定めている、余白を指定する CSS プロパティです。
+これらをリセットすることで、ブラウザによる余白の違いをなくしています。
+</Tips>
+<Tips>
+`cursor` は、マウスカーソルの形を指定する CSS プロパティです。
+これは見た目だけで、その要素が持つ機能には何も影響しません。
+
+`pointer` を指定することで、マウスカーソルが手の形になります。
+`crosshair` を指定すると、十字の形になります。どちらを指定しても課題のチェックは OK としますので、お好みでどうぞ。
+</Tips>
+
+### 色を指定する UI を作成する
+
+- [div 要素](#div)を作成してください。
+- その中に、`type` 属性が `color` である [input 要素](#input)を作成してください。
+    - ID を任意に定めてください。
+- 以前も配置した [style 要素](#style-タグ)を用いて、以下の CSS を記述してください。
+    - この div 要素の位置を、[画面の右下 0px](#position)に固定します。
+
+### 最新の情報を表示する UI を作成する
+
+- 先ほどの div 要素に、span 要素を作成してください。
+    - ID を任意に定めてください。
