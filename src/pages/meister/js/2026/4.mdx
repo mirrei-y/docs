@@ -644,6 +644,19 @@ HTML ページ内の文章を強調したいときには、このプロパティ
     <button style="position: absolute; right: 20px; top: 0px; background-color: #ffaaaa;">ボタン</button>
 </Example>
 
+#### width, height
+
+要素の幅と高さを指定するプロパティです。
+先述した `display` プロパティが `inline` の場合（デフォルトの値が `inline` であるものも含みます）、このプロパティは使用しても無視されます。
+
+```html
+<div style="background-color: #ffaaaa; width: 200px; height: 100px;"></div>
+```
+
+<Example>
+    <div style="background-color: #ffaaaa; width: 200px; height: 100px;"></div>
+</Example>
+
 #### その他
 
 以前紹介した MDN ドキュメントにも、CSS プロパティのリストが掲載されています: [MDN ドキュメント - CSS リファレンス](https://developer.mozilla.org/ja/docs/Web/CSS/Reference#%E7%B4%A2%E5%BC%95)
@@ -1042,8 +1055,8 @@ HTML ファイル内で style 要素・script 要素を用いて、HTML に CSS 
 - 縦5つ、横5つの表を [table 要素](#table)で作成してください。
     - [td 要素](#table) の中身は不要です。
 - [style 要素](#style-タグ)を用いて、以下の CSS を記述してください。
-    - [table 要素](#table)の[幅](#width)を `max-content`、[高さ](#height)を `max-content` にしてください。
-    - [td 要素](#table)の[幅](#width)を `10px`、[高さ](#height)を `10px` にしてください。
+    - [table 要素](#table)の[幅](#width-height)を `max-content`、[高さ](#width-height)を `max-content` にしてください。
+    - [td 要素](#table)の[幅](#width-height)を `10px`、[高さ](#width-height)を `10px` にしてください。
     - [td 要素](#table)の[背景色](#background-color)を薄い灰色（`#E0E0E0`）にしてください。
     - [table 要素](#table) の `margin` を `0px` にしてください。
     - [td 要素](#table) の `padding` を `0px` にしてください。
