@@ -1,0 +1,95 @@
+---
+interface Props {
+    to: string;
+    title: string;
+}
+
+const { to } = Astro.props;
+---
+
+<a href={to} target="_blank" class="card-link">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 15l6 -6" />
+        <path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464" />
+        <path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463" />
+    </svg>
+    <div>
+        <slot />
+        <span class="to">{to}</span>
+    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 6l6 6l-6 6" />
+    </svg>
+</aside>
+
+<style is:global>
+    .card-link {
+        color: #367798;
+        transition: 200ms;
+
+        margin: 2rem 0px;
+        padding-inline: 1.5rem;
+
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        line-height: 1.5;
+
+        font-size: 1.1em;
+        text-decoration: none;
+
+        padding-block: 1em;
+
+        border-top: 2px solid rgba(from currentColor r g b / 0.5);
+        border-bottom: 2px solid rgba(from currentColor r g b / 0.5);
+        border-left: 1px solid rgba(from currentColor r g b / 0.5);
+        border-right: 0.5rem solid currentColor;
+        border-radius: 1rem;
+
+        position: relative;
+        &::before {
+            content: "";
+            position: absolute;
+            top: 0px;
+            bottom: 0px;
+            right: 0px;
+            width: 70%;
+            opacity: 0.1;
+
+            background-image: linear-gradient(to left, currentColor 0%, rgba(from currentColor r g b / 0) 100%);
+            mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5 5" width="5" height="5"><path d="M 0,4 4,0 H 5 V 1 L 1,5 H 0 V 4" /><path d="M 0,0 H 1 L 0,1" /><path d="M 5,5 V 4 L 4,5" /></svg>');
+            mask-size: 1rem;
+        }
+        &:hover {
+            color: #4792b8;
+            box-shadow: 0px 0px 0.5em 0px rgba(from currentColor r g b / 0.2);
+            border-right-width: 4px;
+        }
+
+        & > div {
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
+
+            flex: 1;
+        }
+
+        .to {
+            font-size: 0.75em;
+        }
+        & > svg:first-child {
+
+        }
+        & > svg:last-child {
+            transition: 200ms transform;
+        }
+        &:hover > svg:last-child {
+            transform: translateX(0.5em);
+        }
+
+        p {
+            margin: 0px;
+        }
+    }
+</style>
