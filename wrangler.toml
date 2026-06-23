@@ -1,11 +1,17 @@
 name = "docs"
 compatibility_date = "2026-02-11"
-main = "dist/_worker.js/index.js"
+# main = "dist/_worker.js/index.js"
 
 kv_namespaces = [
 	{ binding = "KV_FEEDBACK", id = "e478e68efd0b46c2b5e17145019d76bb" },
 	{ binding = "KV_WRONG", id = "62265afed4e14c2492b1d65f32b1211c" }
 ]
+
+[[d1_databases]]
+binding = "DB_2026_PIXEL"
+database_name = "docs_meister_js_2026_pixel_canvas"
+database_id = "a1857046-ba5d-4705-814c-6a8da3d6da4b"
+migrations_dir = "migrations"
 
 [assets]
 directory = "./dist/"
