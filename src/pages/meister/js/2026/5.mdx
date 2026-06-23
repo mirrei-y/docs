@@ -1,0 +1,800 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第5回 オブジェクト・DOM
+description: JavaScript におけるオブジェクト、HTML を動的に操作する DOM について学習します。
+written_by: Mirrei
+created_at: 2026-06-14 18:34:42
+updated_at: null
+parent: /meister/js/2026
+---
+
+import Info from "/src/components/Article/Info.astro";
+import Tips from "/src/components/Article/Tips.astro";
+import Hint from "/src/components/Article/Hint.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import InlineImages from "/src/components/Article/InlineImages.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Assignment from "/src/components/Article/Assignment.astro";
+import Example from "/src/components/Article/Example.astro";
+import ExampleTable from "/src/components/Article/Example/Painter/Table.astro";
+import Link from "/src/components/Article/Link.astro";
+
+## 今日は何をやるの？
+
+- JavaScript の思想である「オブジェクト指向」
+- 複数の変数に名前を付けてまとめる「オブジェクト」
+- HTML を JavaScript から操作するための仕組み「DOM」
+
+## オブジェクト指向
+
+JavaScript は、「オブジェクト指向型」のプログラミング言語です。
+オブジェクト指向は、すべての値を「**オブジェクト**」とその継承で表現します。
+
+<Info>
+この講義では[昨年度](/meister/js/2025/4)と異なり **JavaScript における**「クラス」を扱いません。
+このページ中 **JavaScript の文脈で**「クラス」という単語を使用することがあります。その場合は、「オブジェクト」に読み替えてください。
+
+なお厳密には、これらは異なる概念です。興味があれば、昨年度の資料を参照してください。
+</Info>
+
+といっても、今回の講義では複雑な継承を扱わないため、ここで言う「オブジェクト」は単純な概念に落とし込めます。
+話を単純化した、以下の例を見てみましょう。
+
+### 手続き型のプログラム
+
+例えば、C 言語は非オブジェクト指向型、**手続き型**の言語です。
+C 言語でファイル読み込みのコードを書いてみると、以下のようになります。
+
+なお、関数宣言や一部の変数宣言などは省略しています。
+
+```c
+fp = fopen("ファイル名", "r"); // NOTE: ファイルを開く
+
+if (fp != NULL) {
+    check = fgets(s, 100, fp);  // NOTE: ファイルから文字列読み込み
+
+    if (check != NULL) {
+        printf("%s", s); // NOTE: もし読み込めたら、読み込んだ文字列を出力
+    } else {
+        printf("\n"); // NOTE: もし読み込めなかった（すでにファイルを最後まで読み込み終わった）ら、改行を出力
+    }
+} else {
+    // NOTE: もし、ファイルが開けなかったら（ここでは省略）
+}
+
+fclose(fp); // NOTE: ファイルを閉じる
+```
+
+ここで重要なのは、`fopen`, `fgets`, `fclose` です。
+
+`fopen` でファイルを開いた結果の値（ファイルディスクリプタ）は、その後 `fgets`, `fclose` を実行する際にも指定されています。
+
+ここで伝えたいこととしては、「**一番最初にやりたいこと（動詞）として、関数を書いている**」ということです。
+「何を（主語）」、この例では「特定のファイル」については、関数の引数に書いています。
+
+この、**「一番最初にやりたいことを書く」という思想が、手続き型のプログラムの特徴**です。
+
+### オブジェクト指向型のプログラム
+
+次に、同じ機能を持つオブジェクト指向型のプログラムを書いてみます。
+
+<Info>
+ここでは JavaScript をベースに記載しますが、オブジェクト指向をわかりやすくするため、実際には存在しない関数やオブジェクトを使用したプログラムを書きます。
+</Info>
+
+```js
+f = File.open("ファイル名", "r"); // NOTE: ファイルを開く
+
+if (!f.isError) {
+    print(f.read()); // NOTE: ファイルから文字列を読み込み、出力
+} else {
+    // NOTE: もし、ファイルが開けなかったら（ここでは省略）
+}
+
+f.close(); // NOTE: ファイルを閉じる
+```
+
+先ほどの手続き型のプログラムは、「ファイルを開く」「ファイルを読み込む」「ファイルを閉じる」の3つの動作をそれぞれ `fopen`, `fgets`, `fclose` と、「やりたいこと」を最初にして書いていました。
+
+しかし、オブジェクト指向型では、`File.open` で取得した値そのものである変数 `f`、つまり**ファイルそのもの（主語）を最初**に書いています。
+次に `.` (ドット) という区切りがあり、**「やりたいこと」はその次に**書いています。
+
+この、**「一番最初に主語を書く」という思想が、オブジェクト指向型のプログラムの特徴**です。
+
+### 何がいいの？
+
+この思想の利点は、操作の対象が、人間から見るとより明確になることです。
+手続き型において、関数名 `fgets` では「ファイルを読み込む」ことしか読み取れません。
+
+一方オブジェクト指向型では、関数名 `f.read` から「f という変数に入れておいたファイルを読み込む」ということを読み取れます。
+
+つまり、「何に」「何をする」という操作が、手続き型より明確であるということです。
+
+## オブジェクト
+
+次に「オブジェクト」という概念について説明します。
+
+JavaScript において、**オブジェクト**は型で表現されます。
+オブジェクトは、とても簡単に説明すると、キーバリュー形式のテーブルですべての値を表現するものです。
+
+例えば、人間について、そのデータを管理することを考えてみましょう。
+人間には、名前・年齢・職業・出身地などの属性があります。
+
+以下のように、それぞれに対して変数を宣言してデータを管理するのでは非効率です。
+
+```js
+const person1_name = "山田太郎";
+const person1_age = 30;
+const person1_job = "エンジニア";
+const person1_origin = "東京都";
+```
+
+「キーバリュー形式のテーブル」というのは、以下のような構造を指します。
+
+| キー | 値 |
+|-|-|
+| 名前 | 山田太郎 |
+| 年齢 | 30 |
+| 職業 | エンジニア |
+| 出身地 | 東京都 |
+
+一つの物体に対する属性を、見出しと内容の1:1、つまりキーとバリュー（値）で管理するような構造です。
+もうちょっと言い方を変えると、複数のデータをまとめてグループ化できるようなもの、とも捉えることができます。
+
+これが、JavaScript で用いられる**オブジェクト**の概念です。
+
+<Hint>
+C 言語で例えると、構造体によく似た使用方法を持っています。
+
+後述する記法や、プロパティへのアクセス方法なども C 言語の構造体とよく似ています。
+</Hint>
+
+### 構文
+
+オブジェクトは、以下のような式で定義します。
+
+```js
+// 空のオブジェクトを作成
+{}
+
+// 中身が設定されたオブジェクトを作成
+{
+    name: "山田太郎",
+    age: 30,
+    job: "エンジニア",
+    origin: "東京都"
+}
+```
+
+`キー: 値` のようにデータを羅列し、それらを `,` (カンマ) で結合します。
+
+<Tips>
+`,` の後に改行を含める必要はありません。
+例えば、以下のようなものも有効です。
+
+```js
+{ name: "山田太郎", age: 30, job: "エンジニア", ... }
+```
+</Tips>
+
+<Tips>
+「カンマで結合する」とありますが、最後のデータの末尾にカンマがついていてもかまいません。
+
+```js
+{
+    name: "山田太郎",
+    age: 30,
+    job: "エンジニア",
+    origin: "東京都", // カンマがついている
+}
+```
+
+行をコピーするときや、Git でソースコードを管理するときなど、末尾にカンマがついていたほうが便利なことも多いです。
+</Tips>
+
+オブジェクトの定義は式であると説明しましたので、以上の記法を使って定義した値は変数に代入することができます。
+
+```js
+const yamada_taro = {
+    name: "山田太郎",
+    age: 30,
+    job: "エンジニア",
+    origin: "東京都"
+};
+```
+
+これで、人間データ一つにつき、一つの変数で管理できるようになりました。
+
+これを、複数に拡張することも容易になり、変数の数が無駄に増えすぎず、管理しやすくなります。
+
+```js
+const yamada_hanako = {
+    name: "山田花子",
+    age: 25,
+    job: "デザイナー",
+    origin: "大阪府"
+};
+const sato_ichiro = {
+    name: "佐藤一郎",
+    age: 40,
+    job: "教師",
+    origin: "北海道"
+};
+// ...以下略...
+```
+
+<Hint>
+「値を一つにまとめる」という観点であれば、配列でも実装は可能です。
+しかし、配列では「名前を0番目」「年齢を1番目」といったように、**どのインデックスにどのデータが入っているか**を覚えておく必要があります。
+
+```js
+const person_array = ["山田太郎", 30, "エンジニア", "東京都"];
+const person_object = {
+    name: "山田太郎",
+    age: 30,
+    job: "エンジニア",
+    origin: "東京都"
+};
+
+person_array[0] // 名前を参照するには、0番目のインデックスを指定する必要がある
+person_object.name // 名前を参照するには、name というキーを指定すればよい
+```
+</Hint>
+
+### プロパティにアクセスする式
+
+先ほど作成したオブジェクト型の変数 `yamada_taro` に対して、名前や年齢のデータを参照するには、`.` (ドット) で区切って、その直後にキーを指定します。
+`yamada_taro.age` のように書くと、`yamada_taro` 変数の `age` データにアクセスできます。これは式です。
+
+```js
+// yamada_taro 変数の age データにアクセスしている
+let age = yamada_taro.age;
+```
+
+また、参照だけではなく代入も行うことができます。
+
+```js
+yamada_taro.age = 31;
+```
+
+要するに、`yamada_taro.name` や、`yamada_taro.age` が一つの変数のようなものになっているのです。
+これを、このオブジェクトの**プロパティ**と呼びます。
+
+<Tips>
+厳密に言うと、これは「左辺式」というものです。代入の左辺に来ることができる式、という意味です。
+</Tips>
+
+<Caution>
+JavaScript において、ポインタは存在しないということに留意してください。
+
+```js
+let yamada_taro = {
+    // ...略...
+    age: 30,
+    // ...略...
+};
+
+let age = yamada_taro.age; // この時点では age = 30
+age = 31; // 【重要】age = 31 になるが、yamada_taro.age は 30 のまま
+
+yamada_taro.age // yamada_taro.age は 30 のままなので、30
+```
+
+この例においては、`age` は `yamada_taro.age` の値を**コピー**されているだけです。
+`age` と `yamada_taro.age` は独立した変数であり、お互いが別の値をとります。
+
+ただし例外もあります。例えば代入の右辺がオブジェクトだった場合などはこれに該当しません。
+詳しくは自分で調べてみましょう。
+</Caution>
+
+#### 変数によるキー指定
+
+オブジェクトも、配列のように `yamada_taro[...]` を使用してプロパティにアクセスすることができます。
+
+以下の二つの式は、同じ意味を持ちます。
+
+```js
+yamada_taro["name"]
+yamada_taro.name
+```
+
+ここで、`"name"` と、ダブルクォーテーションで括られ、文字列となっていることに注目してください。
+
+変数に置き換えることで、変数でキーを指定することができます。
+
+```js
+const key_variable = "name"; // 変数なので、名前は何でもよい
+
+yamada_taro[key_variable] // yamada_taro.name を指す
+```
+
+これは、[配列の変数によるインデックス指定](2#変数によるインデックス指定)と同じ挙動を示します。
+
+#### 動的な代入
+
+JavaScript では、オブジェクトに存在するプロパティは可変です。
+これは、C の構造体とは大きく異なる点であり、JavaScript の柔軟な点であり、そして厄介な点でもあります。
+
+事前に定義しなくても、後から追加したり、書き換えたりすることができます。
+
+```js
+let tanaka_hanako = {
+    name: "田中花子",
+    age: 25,
+    job: "デザイナー",
+    origin: "大阪府"
+};
+
+tanaka_hanako.hobbies = ["読書"]; // hobbies は存在しないが、後から追加できる
+
+print(tanaka_hanako.hobbies); // 後から追加したものは、追加した時点で利用可能になる
+```
+
+### 例: データベースを作成する
+
+これができると、[配列](2#配列)を使用し、原始的なデータベースが作成できるようになります。
+
+```js
+const people = [
+    {
+        name: "山田太郎",
+        age: 30,
+        job: "エンジニア",
+        origin: "東京都"
+    },
+    {
+        name: "田中花子",
+        age: 25,
+        job: "デザイナー",
+        origin: "大阪府"
+    },
+    {
+        name: "佐藤一郎",
+        age: 40,
+        job: "教師",
+        origin: "北海道"
+    },
+    {
+        name: "鈴木恵子",
+        age: 35,
+        job: "医師",
+        origin: "福岡県"
+    },
+];
+
+let avg = 0;
+for (const person of people) {
+    avg = avg + person.age;
+}
+avg = avg / people.length;
+```
+
+この例では、データベースに登録している人の平均年齢が、変数 `avg` に代入されます。
+
+### メソッド
+
+オブジェクトのプロパティには、値だけでなく、関数も設定できます。
+このような関数を、**メソッド**と呼びます。
+
+```js
+const person = {
+    name: "山田太郎",
+    age: 30,
+    job: "エンジニア",
+    origin: "東京都",
+    greet: function() {
+        return `こんにちは、私は${this.name}です。`;
+    }
+};
+
+person.greet(); // こんにちは、私は山田太郎です。
+```
+
+メソッドを定義する際は、無名関数が使用されることが多いです。
+[無名関数については、前回で説明しています](3#無名関数)。
+
+### 標準メソッド
+
+実は、今まで扱ってきた数値・文字列・配列・関数はすべてオブジェクトです。
+これが、最初に説明した「JavaScript がオブジェクト指向型の言語である」ということの意味です。
+
+そのため、以下のように、文字列や配列に設定されたメソッドが最初から利用できます。
+実際に JavaScript でプログラミングを行う際は、この標準メソッドをフル活用していくことになります。
+**覚える必要はありません**。これらはいつも使っていくうちに次第に覚えるものですし、そもそも最近は IDE などのツールが、利用可能なメソッドを提示してくれることが多いです。
+課題もこれらに頼っていきましょう。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+array.push(5); // 配列の最後に 5 を追加する
+array.shift(); // 配列の最初の要素を削除する
+
+console.log(array); // [1, 2, 3, 4, 5]
+```
+
+講義で使用するメソッドの一覧は、以下のページにまとめてあります。
+このページを参照して課題を進めてください。
+
+<Link to="/manual/js/standard-methods">
+    標準メソッドのまとめ
+</Link>
+
+## DOM 操作
+
+**HTML (Web ページ) には、JavaScript を埋め込んで実行させることができます**。
+具体的に言えば、Web ページの中の HTML 要素を動的に追加・削除・変更したりできるようになります。
+
+すべての Web アプリケーションは、この JavaScript で HTML 要素を追加・削除・変更する機能を利用して作られています。
+これを **DOM 操作**といいます。
+
+**JavaScript を埋め込むには、`<script>` タグを使用します**。
+タグを配置する場所は、厳密にはいろいろ条件があるのですが、この講義においては `<body>` タグの中の一番最後を推奨します。
+
+```html
+<body>
+    <p>Hello world!</p>
+    <!-- ... いろいろ要素が書かれている ... -->
+    <script>
+        document.write("JavaScript is working successfully!"); // JavaScript が書ける
+    </script>
+</body>
+```
+
+<Tips>
+`<script>` タグに書かれた JavaScript は、デフォルトでそのタグが読み込まれた際に実行されます。
+タグは、基本的に書かれた順番に上から読み込まれます。
+そのため、`<head>` タグ内に `<script>` タグを書いてしまうと、`<body>` タグが読み込まれる前に実行されることになります。
+
+すると、DOM を制御する関数が動かず、エラーになってしまうことが多くなります。
+</Tips>
+
+`<script>` タグで埋め込まれた JavaScript では、`document` を代表とした以下のオブジェクト、および標準メソッドが利用できます。
+
+### document
+
+`document` オブジェクトは、DOM 操作をするうえで一番よく使われる標準オブジェクトです。
+
+DOM 操作は、基本的には「要素の取得（または新しく作成）」→「要素のプロパティの書き換え」という順番で行われます。
+
+```html
+<p id="paragraph1">Hello world!</p>
+<script>
+    // 要素を JavaScript のオブジェクトとして取得し、それを変数 paragraph に代入する
+    const paragraph = document.getElementById("paragraph1");
+
+    // paragraph（＝先ほど取得した要素オブジェクト）の内容を変更する
+    paragraph.textContent = "Hello JavaScript!";
+</script>
+```
+
+<Example>
+    Hello JavaScript!
+</Example>
+
+上記の例では、もともと HTML においては "Hello world!" と表示するとされていましたが、JavaScript によってその内容が書き換わっています。
+
+#### document.getElementById(id)
+
+要素を ID 属性で取得できるメソッドです。
+メソッドの戻り値は、後述する `Element` クラスのインスタンスです。
+
+```html
+<p id="paragraph1">Hello world!</p>
+```
+
+```js
+const paragraph = document.getElementById("paragraph1");
+```
+
+<Hint>
+CSS においては `#paragraph1` と指定しましたが、`getElementById` メソッドの引数においては `#` は必要ありません。
+</Hint>
+
+#### document.getElementsByTagName(tagName)
+
+要素を要素名指定で取得できるメソッドです。
+メソッドの戻り値は、後述する `Element` クラスのインスタンスが格納された配列です。
+
+```html
+<p>Hello world!</p>
+<p>Hello world!</p>
+<p>Hello world!</p>
+```
+
+```js
+const paragraphs = document.getElementsByTagName("p");
+
+for (const p of paragraphs) {
+    // ...
+}
+```
+
+<Tips>
+厳密には、戻り値は `NodeList` というクラスであり、配列ではありません。
+</Tips>
+
+#### document.getElementsByClassName(className)
+
+要素を CSS のクラス指定で取得できるメソッドです。
+メソッドの戻り値は、後述する `Element` クラスのインスタンスが格納された配列です。
+
+```html
+<p class="paragraph">Hello world!</p>
+<p class="paragraph">Hello world!</p>
+<p class="paragraph">Hello world!</p>
+```
+
+```js
+const paragraphs = document.getElementsByClassName("paragraph");
+
+for (const p of paragraphs) {
+    // ...
+}
+```
+
+#### document.querySelector(query)
+
+要素を CSS のセレクタ形式で取得できるメソッドです。
+メソッドの戻り値は、後述する `Element` クラスのインスタンスです。
+
+このメソッドは、セレクタがマッチした最初の要素のみ受け取ります。
+
+```html
+<p id="paragraph1" class="paragraph">Hello world!</p>
+<p id="paragraph2" class="paragraph">Hello world!</p>
+<p id="paragraph3" class="paragraph">Hello world!</p>
+```
+
+```js
+const paragraph1 = document.querySelector("p.paragraph#paragraph1");
+```
+
+#### document.querySelectorAll(query)
+
+先ほどの `querySelector` メソッドと同じように使用できますが、複数要素を配列として受け取れるメソッドです。
+
+```html
+<p id="paragraph1" class="paragraph">Hello world!</p>
+<p id="paragraph2" class="paragraph">Hello world!</p>
+<p id="paragraph3" class="paragraph">Hello world!</p>
+```
+
+```js
+const paragraphs = document.querySelectorAll("p.paragraph");
+
+for (const p of paragraphs) {
+    // ...
+}
+```
+
+#### document.createElement(tagName)
+
+要素を新たに作成できるメソッドです。
+メソッドの戻り値は、後述する `Element` クラスのインスタンスです。
+
+戻り値の要素は、まだ HTML ページのどこにも存在していないため、後述する `appendChild` メソッドなどを用いて、HTML ページのどこかに追加する必要があります。
+
+```js
+const newParagraph = document.createElement("p");
+newParagraph.textContent = "Hello world!";
+
+document.body.appendChild(newParagraph);
+```
+
+#### document.body
+
+body 要素（実態は `Element` クラスのインスタンス）が代入されているプロパティです。
+
+body 要素を取得したい場合、ここから取得すると便利です。
+
+### location
+
+#### location.reload()
+
+ページを再読み込みするメソッドです。
+
+#### location.href
+
+ページの現在の URL が代入されているプロパティです。
+
+### Element クラス
+
+`document.getElementById(id)` や `document.querySelector(query)` などを用いて取得できるオブジェクトは、`Element` クラスのインスタンスが格納された配列です。
+
+これらには、いろいろ便利で面白いメソッドやプロパティがあります。
+
+<Caution>
+`Element.methodName` と提示しますが、`Element` はクラスなので、実際使用するときは `Element.` ではなくインスタンスを指定する必要があります。
+
+この講義ではクラスについて解説しません。
+クラスとインスタンスの違いについては、[昨年度の講義資料](/meister/js/2025/4)を参考にしてください。
+
+```js
+const someElement = document.querySelector("#some_id");
+
+// これが Element クラスのインスタンスであり、このセクションで説明している箇所
+someElement.textContent = "要素のテキストを書き換えるよ";
+// また、以下は同じ意味
+document.querySelector("#some_id").textContent = "要素のテキストを書き換えるよ";
+```
+</Caution>
+
+#### document オブジェクトの一部
+
+先ほど `document` オブジェクトのセクションで説明した一部メソッドが使用できます。
+
+- Element.getElementById(id)
+- Element.getElementsByTagName(tagName)
+- Element.getElementsByClassName(className)
+- Element.querySelector(query)
+- Element.querySelectorAll(query)
+
+`document` オブジェクトにあるこれらの要素取得メソッドは、ページ全体から検索します。
+しかしこれらのメソッドは、その要素の子要素の中から指定された条件（ID や CSS クラス、`querySelector` の条件など）にマッチする要素を探します。
+
+#### Element.appendChild(child)
+
+指定された要素 `child` を子要素として追加できるメソッドです。
+
+```js
+const newParagraph = document.createElement("p");
+newParagraph.textContent = "Hello world!";
+
+document.body.appendChild(newParagraph);
+```
+
+上記の例では、**最後の行を実行して初めて**、JavaScript 実行環境内に仮想的に作成された要素 `newParagraph` が、HTML ページの **body 要素の子要素として追加されます**。
+
+#### Element.textContent
+
+要素の内容が含まれているプロパティです。
+
+代入を行うと、要素の中身を動的に変えることができます。
+
+#### Element.children
+
+要素の子要素が含まれているプロパティです。
+
+例えば、以下のように子要素の中身を動的に変えることができます。
+
+```js
+for (const child of document.querySelector(".news").children) {
+    child.textContent = "読み込み中……";
+}
+```
+
+#### Element.style
+
+要素の style 属性に含まれる CSS プロパティを、動的に変えることができるプロパティです。
+
+このプロパティ自体は CSS プロパティ名をキーに持つオブジェクトです。
+
+```js
+document.body.style.backgroundColor = "#ff0000";
+```
+
+<Hint>
+CSS プロパティ名は `-`（ハイフン）が含まれることがあります。
+JavaScript ではハイフンを含むキーを指定して参照・代入をしづらいため、キャメルケース（`background-color` → `backgroundColor`）に変換されます。
+</Hint>
+
+#### Element.value
+
+input 要素や textarea 要素など、ユーザーが入力できる要素の値が代入されているプロパティです。
+
+```html
+<input type="text" id="example_input" />
+```
+```js
+const inputElement = document.querySelector("#example_input");
+inputElement.value = "Hello world!"; // input 要素の値を変更する
+```
+
+<Example>
+    <input type="text" id="example_input" value="Hello world!" />
+</Example>
+
+#### Element.onclick
+
+要素がクリックされたときに実行される関数を代入できるプロパティです。
+
+例えば、クリックされたときに文字列を変える、といったような動きも JavaScript で実装することができます。
+
+```html
+<button>Click me!</button>
+<p></p>
+<script>
+    const btnElement = document.querySelector("button");
+    btnElement.onclick = () => {
+        document.querySelector("p").textContent = "Hello world from JavaScript!";
+    };
+</script>
+```
+
+#### Element.remove()
+
+要素を削除できるメソッドです。
+
+#### その他
+
+以前紹介した MDN ドキュメントにも、Element クラスで使用できるメソッドやプロパティが掲載されています: [MDN ドキュメント - Element](https://developer.mozilla.org/ja/docs/Web/API/Element)
+
+## 課題
+
+今回の課題は、前回作成した HTML ファイルに追記する形で実装します。
+
+<Info>
+今回の課題は、自動チェックはありません。
+このページに記載されたすべての課題が終了後、TA に直接確認してもらってください。
+</Info>
+
+### セルを JavaScript から生成する
+
+- 縦と横のセルの数を[定数](1#const) `WIDTH`、 `HEIGHT` で指定できるようにしてください。
+    - `WIDTH` は `100`、`HEIGHT` は `50` とします。
+- その定数を利用し、JavaScript でセルを生成するようにしてください。
+
+<Example>
+    <ExampleTable width={50} height={20} />
+</Example>
+
+<Hint>
+`table` 要素は `tr` 要素と `td` 要素を子要素に持ちます。
+`tr` 要素は行を表し、`td` 要素はセルを表しますので、以下のような構造になります。
+
+```html
+<table>
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
+```
+
+- table を作る
+- table を作るときは、tr を複数個作る
+- tr を作るときは、td を複数個作る
+
+……という順番で考えていくと、横に何個置くか（td の個数）、縦に何個置くか（tr の個数）二重のループを用いて二次元のセルを生成することができることがわかります。
+
+```js
+for (???) {
+    // ここから HEIGHT 個の tr を生成したい
+
+    for (???) {
+        // ここから WIDTH 個の td を生成したい
+
+        // td は、tr の子要素として追加したい
+    }
+
+    // 行は、table の子要素として追加したい
+}
+```
+</Hint>
+
+<Hint>
+JavaScript でセルを生成するには、[`document.createElement` メソッド](#documentcreateelementtagname)を使用します。
+
+生成したセルを実際に Web ページに表示するには、[`appendChild` メソッド](#elementappendchildchild)を使用します。
+</Hint>
+
+### JavaScript で、クリックしたセルの背景色を指定された色にする
+
+- 各セルについて、クリックされたときに CSS の `background-color` プロパティを変更してください。
+    - 指定する値は、前回作成した input 要素（`<input type="color" ... />`）の、value 属性です。
+    - 前回、この input 要素を取得するため ID 要素をつけておきました。
+
+<Example touchable={true}>
+    <input type="color" id="example_color" style="position: absolute; right: 0px; bottom: 0px;" />
+    <ExampleTable width={50} height={20} />
+</Example>
+
+<Hint>
+セルがクリックされたときに行う動作を決定するには、無名関数を [`onclick` プロパティ](#elementonclick)に代入することで実現できます。
+</Hint>

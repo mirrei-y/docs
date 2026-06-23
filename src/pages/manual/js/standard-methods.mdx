@@ -1,0 +1,258 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: JavaScript の標準メソッド
+description: JavaScript で使用できる代表的な標準メソッドを紹介します。
+written_by: Mirrei
+created_at: 2026-06-14 19:20:23
+updated_at: null
+---
+
+import Info from "/src/components/Article/Info.astro";
+import Tips from "/src/components/Article/Tips.astro";
+import Hint from "/src/components/Article/Hint.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import InlineImages from "/src/components/Article/InlineImages.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Assignment from "/src/components/Article/Assignment.astro";
+
+JavaScript には、配列や文字列などのオブジェクトに対して使用できる、便利なメソッド（標準メソッド）がたくさん用意されています。
+このページでは、代表的な標準メソッドを紹介します。
+<br />
+
+## 配列
+
+配列のメソッドには、以下のようなものがあります。
+
+### push
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/push)
+
+push は、配列に要素を追加するメソッドです。
+
+<Info>
+第二回で配列を操作するのにインデックスを指定していたと思いますが、実はインデックスを指定して挿入する方法はあまり使用するべきではありません。
+
+例えば、空の配列に対していきなり 3 を指定してデータを挿入したとします。
+すると、0, 1, 2 の先頭 3 つは `undefined` になってしまいます。
+</Info>
+
+```js
+const array = [];
+
+array.push(3);
+array.push(4);
+array.push(5);
+
+array // [3, 4, 5]
+```
+
+### shift
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/shift)
+
+shift は、配列の最初の要素を削除し、その最初の要素を戻り値に持つメソッドです。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+const firstElement = array.shift();
+
+array // [1, 2, 3, 4]
+firstElement // 0
+```
+
+### pop
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/pop)
+
+pop は、配列の最後の要素を削除し、その最後の要素を戻り値に持つメソッドです。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+const lastElement = array.pop();
+
+array // [0, 1, 2, 3]
+lastElement // 4
+```
+
+### includes
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/includes)
+
+includes は、配列の中に指定された要素が入っているかどうかを、ブーリアン値で戻り値に持つメソッドです。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+array.includes(0) // true
+array.includes(-1) // false
+```
+
+### slice
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/slice)
+
+slice は、配列に対して開始地点と終了地点を指定し、その範囲を要素として持つ新しい配列を作成するメソッドです。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+const sliced = array.slice(1, 3);
+
+array // [0, 1, 2, 3, 4]
+sliced // [1, 2]
+```
+
+### join
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/join)
+
+join は、配列の全要素を指定した文字列で結合します。
+
+```js
+const array = ["Hello", "world", "from", "JavaScript!"];
+
+const joined = array.join(" ");
+
+array // ["Hello", "world", "from", "JavaScript!"]
+joined // "Hello world from JavaScript"
+```
+
+### length
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/length)
+
+これはメソッドではなくプロパティですが、[第2回で説明した length](2#配列の長さを取得する) についても、プロパティの一種です。
+
+```js
+const array = [0, 1, 2, 3, 4];
+
+const length = array.length;
+
+array // [0, 1, 2, 3, 4]
+length // 5
+```
+
+### その他
+
+その他、ソートを行う `sort()` や、要素を検索する `find()` などもあります。
+
+有名なブラウザである Firefox を開発している Mozilla という団体が提供している、[MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array) が参考になると思います。
+左側メニューの、「インスタンスメソッド」や「インスタンスプロパティ」を見てみるとよいと思います。
+
+## 文字列
+
+JavaScript では、文字列もオブジェクトの一種として扱われます。
+
+```js
+const str1 = "Hello!";
+const str2 = new String("Hello!");
+```
+
+文字列自体の [MDN ドキュメントはこちら](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String)です。
+
+### toLowerCase
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/toLowerCase)
+
+toLowerCase は、文字列内のすべての英字を小文字に変換した新しい文字列を返します。
+
+```js
+const str = "Hello World!";
+
+const lower = str.toLowerCase();
+
+str // "Hello World!"
+lower // "hello world!"
+```
+
+### toUpperCase
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/toUpperCase)
+
+toUpperCase は、文字列内のすべての英字を大文字に変換した新しい文字列を返します。
+
+```js
+const str = "Hello World!";
+
+const upper = str.toUpperCase();
+
+str // "Hello World!"
+upper // "HELLO WORLD!"
+```
+
+### split
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/split)
+
+split は、指定した区切り文字や正規表現で文字列を分割し、配列として返します。
+
+```js
+const str = "apple,banana,orange";
+
+const arr = str.split(",");
+
+str // "apple,banana,orange"
+arr // ["apple", "banana", "orange"]
+```
+
+### replace
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/replace)
+
+replace は、最初に一致した部分だけを置換します。
+
+```js
+const str = "apple banana apple";
+
+const replaced = str.replace("apple", "orange");
+
+str // "apple banana apple"
+replaced // "orange banana apple"
+```
+
+### replaceAll
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll)
+
+replaceAll は、一致したすべての部分を置換します。
+
+```js
+const str = "apple banana apple";
+
+const replacedAll = str.replaceAll("apple", "orange");
+
+str // "apple banana apple"
+replacedAll // "orange banana orange"
+```
+
+### trim
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/trim)
+
+trim は、文字列の両端の空白（スペースや改行）を取り除くメソッドです。
+
+```js
+const str = "  Hello!  ";
+
+const trimmed = str.trim();
+
+str // "  Hello!  "
+trimmed // "Hello!"
+```
+
+### length
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/String/length)
+
+配列と同様に、メソッドではなくプロパティですが、文字列でもその文字列の長さを `length` プロパティを使用して取得することができます。
+
+```js
+const str = "こんにちは";
+
+const length = str.length;
+
+str // "こんにちは"
+length // 5
+```
