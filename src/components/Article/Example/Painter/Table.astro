@@ -30,9 +30,12 @@ const height = Astro.props.height ?? 5;
 </style>
 
 <script>
-    document.querySelectorAll<HTMLElement>(".example-painter-table td").forEach(td => {
-        td.addEventListener("click", () => {
-            td.style.backgroundColor = "red";
+    const tables = document.querySelectorAll<HTMLTableElement>(".example-painter-table");
+    for (const table of tables) {
+        table.querySelectorAll("td").forEach(td => {
+            td.addEventListener("click", () => {
+                td.style.backgroundColor = (table.previousElementSibling as HTMLInputElement | undefined)?.value ?? "red";
+            });
         });
-    });
+    }
 </script>
