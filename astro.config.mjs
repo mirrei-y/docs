@@ -16,4 +16,9 @@ export default defineConfig({
 
     output: "static",
     adapter: cloudflare(),
+
+    // NOTE: 各種 API のエンドポイントは file: から叩かれることが多い
+    security: {
+        checkOrigin: false,
+    },
 });
