@@ -40,7 +40,7 @@
             const x = parseInt(xStr ?? "-1");
             const y = parseInt(yStr ?? "-1");
             if (x === -1 || y === -1) throw new Error("ライブラリエラー: X, Y 座標が読み取れませんでした。");
-            if (!(x >= 0 && x < 150 && y >= 0 && y < 50)) throw new Error("ライブラリエラー: X, Y 座標がキャンバスの範囲外です。");
+            if (!(x >= 0 && x < 100 && y >= 0 && y < 50)) throw new Error("ライブラリエラー: X, Y 座標がキャンバスの範囲外です。");
 
             const request = new Request(input, init);
             const text = await request.text();
