@@ -278,37 +278,53 @@ for (let i = 0; i < 100000; i++) {
 今回のピクセルペインターでは発生しない脆弱性として、クロスサイトスクリプティング（XSS）があります。
 これは、悪意あるユーザーが JavaScript を仕込んだデータをアップロードすると、そのデータがページに表示される際に、仕込まれた JavaScript が実行されてしまう脆弱性です。
 
-今回は以下のようなコードをよく書いていましたね。
+今回、任意課題で以下のようなコードを書いたと思います。
 
 ```js
-td.style.backgroundColor = pixel.color;
+span.textContent = pixel.color;
 ```
 
-何の変哲もない背景色を変えるコードです。
-しかし、もしこのアプリのコンセプトが「ピクセルペインター」ではなく「表にメッセージを書き込めるテーブル型掲示板」だったとしたらどうでしょうか。
+`textContent` というのは、DOM 操作の一種で、**文字列として** HTML 要素の中身を編集できる便利なプロパティです。
+しかし `innerHTML` というプロパティを使うと、文字列を **HTML として解釈し**、DOM に変換してしまいます。
+以下のように書き換えてみましょう。
 
 ```js
-td.innerHTML = pixel.message;
+span.innerHTML = pixel.color;
 ```
 
-`innerHTML` というのは、DOM 操作の一種で、HTML の文字列を入れることでその HTML を DOM に変換してくれる便利なプロパティです。
+おめでとうございます！🎉
+あなたのピクセルペインターは、クロスサイトスクリプティング（XSS）脆弱性を持つようになりました。
 
-仮に、`pixel.message` に `<script>alert("XSS");</script>` という文字列が入っていた場合はどうでしょうか。
-以下と同値になりますね。
+`pixel.color` はサーバーを介して誰でも書き込めます。
+仮に誰か一人でもこのようなメッセージを書き込んでしまうと、掲示板を開いた瞬間、脆弱性を持つコードを開いているすべてのブラウザで勝手に HTML を実行できます。
+
+この `pixel.color` は、もともと PUT メソッドを用いたリクエストのボディに書き込まれた文字列です。
+だから、以下のように仕込むと、なんと span 要素の部分に画像が表示されるようになります。
 
 ```js
-td.innerHTML = '<script>alert("XSS");</script>';
+fetch(`https://docs.mirrei.dev/api/meister/js/2026/pixels/100/50`, {
+    method: "PUT",
+    body: `<img src="https://mirrei.dev/icon.webp" />`
+});
 ```
 
-この場合、`<script>` タグが DOM に変換されてしまうので、ページを開いた瞬間に `alert("XSS");` が実行されてしまいます。
+<InlineImages>
+    <CaptionImage src="/attachments/meister/js/2026/6/extra/xss-before.webp" caption="XSS 攻撃を行う前の状態。" />
+    <CaptionImage src="/attachments/meister/js/2026/6/extra/xss-after.webp" caption="XSS 攻撃が成功した後の状態。" />
+</InlineImages>
 
-これは、「表にメッセージを書き込めるテーブル型掲示板」においては非常に問題です。
-`pixel.message` や `pixel.color` はサーバーを介して誰でも書き込めるものです。
-誰か一人でもこのようなメッセージを書き込んでしまうと、掲示板を開いた瞬間に全員のブラウザで勝手に JavaScript が実行されてしまうからです。
+大きすぎて画面を覆っていますね。
+
+お絵描きアプリだったら笑いごとですが、これが銀行などの Web サイトだったら大変です。
+厳密に言うと XSS ではありませんが、実際に以下のような事例も起きています。
+
+<Link to="https://www.daj.jp/security_reports/190613_1/">
+    正規のWebサイトを改ざんし偽警告や偽当選サイトへ誘導する攻撃を確認 | デジタルアーツ
+</Link>
 
 ### バッファオーバーフロー
 
-また、バッファオーバーフローという脆弱性もあります。
+また、有名なものとしてバッファオーバーフローという脆弱性もあります。
 
 ```js
 fetch(`https://docs.mirrei.dev/api/meister/js/2026/pixels/9999999999999999/9999999999999999`, {
