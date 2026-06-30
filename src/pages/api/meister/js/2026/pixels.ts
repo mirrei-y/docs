@@ -16,32 +16,12 @@ const CORS_HEADERS = {
 };
 
 /** 指定された範囲のピクセルを取得します。範囲は必須です。 */
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async () => {
     const db = env.DB_2026_PIXEL;
 
-    const raw = {
-        x1: url.searchParams.get("x1"),
-        y1: url.searchParams.get("y1"),
-        x2: url.searchParams.get("x2"),
-        y2: url.searchParams.get("y2"),
-    };
-
-    if (raw.x1 === null || raw.y1 === null || raw.x2 === null || raw.y2 === null) {
-        return new Response("Bounds query parameters (x1, y1, x2, y2) are required", { status: 400, headers: CORS_HEADERS });
-    }
-
-    const x1 = Number(raw.x1);
-    const y1 = Number(raw.y1);
-    const x2 = Number(raw.x2);
-    const y2 = Number(raw.y2);
-
-    if (!Number.isInteger(x1) || !Number.isInteger(y1) || !Number.isInteger(x2) || !Number.isInteger(y2)) {
-        return new Response("Bounds must be integers", { status: 400, headers: CORS_HEADERS });
-    }
-
     const { results } = await db.prepare(
-        "SELECT x, y, color FROM pixels WHERE x >= ?1 AND x <= ?2 AND y >= ?3 AND y <= ?4 ORDER BY x, y"
-    ).bind(x1, x2, y1, y2).all<{ x: number; y: number; color: string }>();
+        "SELECT x, y, color FROM pixels ORDER BY x, y"
+    ).all<{ x: number; y: number; color: string }>();
 
     return Response.json({ pixels: results }, { headers: CORS_HEADERS });
 };
