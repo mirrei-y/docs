@@ -33,9 +33,9 @@
      */
     async function fetch(input, init) {
         const url = new URL(input);
-        if ((input.method ?? "GET") === "GET" && url.href.startsWith("https://docs.mirrei.dev/api/meister/js/2026/pixels?")) {
+        if ((init?.method ?? "GET") === "GET" && url.href.startsWith("https://docs.mirrei.dev/api/meister/js/2026/pixels")) {
             return await originalFetch(input, init);
-        } else if (input.method === "PUT" && url.href.startsWith("https://docs.mirrei.dev/api/meister/js/2026/pixels/")) {
+        } else if (init?.method === "PUT" && url.href.startsWith("https://docs.mirrei.dev/api/meister/js/2026/pixels/")) {
             const [_, xStr, yStr] = /\/pixels\/(\d+)\/(\d+)$/.exec(url.href) ?? [];
             const x = parseInt(xStr ?? "-1");
             const y = parseInt(yStr ?? "-1");
