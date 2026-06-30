@@ -4,7 +4,7 @@ title: JavaScript の標準メソッド
 description: JavaScript で使用できる代表的な標準メソッドを紹介します。
 written_by: Mirrei
 created_at: 2026-06-14 19:20:23
-updated_at: null
+updated_at: 2026-06-30 11:10:43
 ---
 
 import Info from "/src/components/Article/Info.astro";
@@ -256,3 +256,32 @@ const length = str.length;
 str // "こんにちは"
 length // 5
 ```
+
+## その他
+
+### setTimeout
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/API/Window/setTimeout)
+
+第一引数に指定された関数を、第二引数に指定された時間（ミリ秒）後に一度だけ実行するメソッドです。
+
+```js
+setTimeout(() => {
+    // NOTE: この中身は 1 秒後に実行される
+    console.log("Hello!");
+}, 1000);
+```
+
+### setInterval
+
+[参考: MDN ドキュメント](https://developer.mozilla.org/ja/docs/Web/API/Window/setInterval)
+
+第一引数に指定された関数を、第二引数に指定された時間（ミリ秒）ごとに**繰り返し**実行するメソッドです。
+
+```js
+setInterval(() => {
+    // NOTE: この中身は 1 秒ごとに繰り返し実行される
+    console.log("Hello!");
+}, 1000);
+```
+
