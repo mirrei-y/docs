@@ -1,0 +1,490 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第6回 HTTP・Web アプリケーション制作
+description: JavaScript におけるオブジェクト、HTML を動的に操作する DOM について学習します。
+written_by: Mirrei
+created_at: 2026-06-14 18:34:42
+updated_at: null
+parent: /meister/js/2026
+---
+
+import Info from "/src/components/Article/Info.astro";
+import Tips from "/src/components/Article/Tips.astro";
+import Hint from "/src/components/Article/Hint.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import InlineImages from "/src/components/Article/InlineImages.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Assignment from "/src/components/Article/Assignment.astro";
+import Example from "/src/components/Article/Example.astro";
+import ExampleTable from "/src/components/Article/Example/Painter/Table.astro";
+import Link from "/src/components/Article/Link.astro";
+
+## 今日は何をやるの？
+
+- HTML を含めたすべてのデータをやり取りする通信プロトコル「HTTP」
+- JavaScript で HTTP 通信を行うための標準メソッド「fetch」
+
+## HTTP/1.1
+
+最終回である今回は、今までの知識を使用して、サーバー側で処理を行う Web アプリケーションを作成します。
+
+### 概要
+
+私たちが Web ページを見るとき、Web ページのデータはインターネットを通じてどこかにあるサーバーと通信し、必要なデータをダウンロードしています。
+その際の通信に使用される、「どういう書式でデータを送るか」を定める約束事（プロトコル）が **HTTP** です。
+
+HTTP とは、Hypertext Transfer Protocol の略で、主に Web ページのデータを転送するための通信プロトコルです。
+
+<CaptionImage src="/attachments/meister/js/2024/5/http-abstract.webp" caption="HTTP を抽象化した図。@IT による、『第1回　HTTPプロトコルとは』より引用。" />
+
+例えば、今あなたが見ているこのページも、HTTP を使用して通信をしています。
+
+### URL
+
+自分のコンピューターにない Web サイトにアクセスするには、 URL (Uniform Resource Locator) という文字列が必要です。
+
+URL は、インターネット上で一意なファイルの位置です。
+URL にはどのサーバーのどのフォルダにあるファイル、という情報が含まれています。
+
+---
+
+例えば、 `https://docs.mirrei.dev/meister/js/2026/6` という URL において、指定されているのは以下の情報です。
+
+| 種類 | 内容 |
+| --- | --- |
+| 接続方式 | `https` (暗号化された接続) |
+| サーバー | `docs.mirrei.dev` |
+| パス | `/meister/js/2026/6` |
+
+**パス**というのは、PC 上のファイルの位置を示すアドレスです。
+例えば、`C:\Users\Mirrei\Desktop\課題.txt` といった形式で表されます。
+
+Linux や macOS（UNIX 系）では、`/Users/Mirrei/Desktop/課題.txt` などで表されます。
+URL では、基本的に後者の UNIX 系のパス表現を使用しています。
+
+### 利点
+
+HTTP をフルに活用すると、Web ページを取得した後も、JavaScript を使って追加のデータを取得するプログラムを書くことができるようになります。
+
+地図を表示できる Web サイトが代表的な例です。
+
+<CaptionImage src="/attachments/meister/js/2024/5/google-maps.webp" caption="代表的な地図を表示する Web アプリである Google Maps。" />
+
+ドラッグすると地図の表示範囲が移動しますが、巨大な全世界の地図データを最初にダウンロードすることは不可能なため、サーバーに置くことがほとんどです。
+
+そこで、まず最初に表示したい範囲の画像を要求する JavaScript コードを含んだページを送信し、後から表示したい範囲だけの地図データをダウンロードすることで、この問題を解決できます。
+
+<CaptionImage src="/attachments/meister/js/2024/5/google-maps-traffic.webp" caption="Google Maps の通信ログ。タイプが「script」のものは JavaScript コードで、「png」のものは地図の画像データ。" />
+<CaptionImage src="/attachments/meister/js/2024/5/google-maps-loading.webp" caption="地図を読み込み中の Google Maps。" />
+
+### リクエスト
+
+HTTP には複数のバージョンがありますが、今回はシンプルな HTTP/1.1 と呼ばれるバージョンの HTTP を学習します。
+
+クライアントが Web ページをダウンロードする際、まずクライアントはサーバーに対して以下のようなリクエストを送信します。
+
+```
+GET /meister/js/2026/6 HTTP/1.1
+Host: docs.mirrei.dev
+Accept: */*
+
+```
+
+`GET` は、そのファイル（リソースといいます）に対してどのような操作を行うかを指定します。
+これを、「リクエストメソッド」と呼びます。
+リクエストメソッドには、`GET`, `POST`, `PUT`, `DELETE` などが指定できます。
+
+<CaptionImage src="/attachments/meister/js/2024/5/http-request.webp" caption="HTTP リクエスト。@IT による、『「HTTP」の仕組みをおさらいしよう』の 図 7 を引用。" />
+
+Web ページを見るときには、GET メソッドが使用されます。
+また、クライアントが動的にサーバーにデータを送る際は、POST メソッド（まれに PUT や DELETE などの他のメソッド）が使用されます。
+
+#### リクエストヘッダー
+
+この時点で1行目が終了し、その後は「リクエストヘッダー」という情報群になります。
+
+ヘッダーは、リクエストに追加データを付与するもので、`(キー): (値)` という書式で書きます。
+
+代表的に、以下のようなヘッダーがあります。
+
+| ヘッダー | 用途 |
+| - | - |
+| Host | 宛先ホスト名をサーバーに知らせる |
+| Accept | ブラウザが表示できるファイルの種類を、ブラウザが自己申告する |
+| User-Agent | ブラウザ名やバージョンを知らせる |
+| Cookie | サーバー側が、クライアントに一定量のデータを保存できるCookie機能で使用される |
+| Connection | リクエスト・レスポンスが終了した後、接続を切断するかどうか設定する |
+
+<Tips>
+[MDN Web Docs: リクエストヘッダー](https://developer.mozilla.org/ja/docs/Glossary/Request_header) では、より詳しいリクエストヘッダー一覧を見ることができます。
+</Tips>
+
+#### リクエストボディ
+
+先ほど示した以下のようなリクエストには、一部のメソッドで「リクエストボディ」を含めることができます。
+
+例えば、データ（画像、文章など）をサーバーに送る際などに、リクエストボディの部分にデータを格納します。
+
+```
+POST /api/novels HTTP/1.1
+Host: docs.mirrei.dev
+Content-Type: text/plain
+
+愛ということばは、いつから人間の社会に発生したものでしょう。
+愛という言葉をもつようになった時期に、人類はともかく一つの飛躍をとげたと思います。
+...
+```
+
+### レスポンス
+
+サーバーは、このリクエストに対し以下のようなレスポンスを送信します。
+
+```
+HTTP/1.1 200 OK
+Date: Sun, 23 Jun 2024 22:49:18 GMT
+Content-Type: text/html
+Content-Length: 8888
+
+... HTMLデータ ...
+```
+
+#### レスポンスヘッダー
+
+リクエストヘッダーと同様に、レスポンスにもヘッダーを含めることができます。
+
+代表的に、以下のようなヘッダーがあります。
+
+| ヘッダー | 用途 |
+| - | - |
+| Content-Type | ファイルの内容の種類（text/html, application/javascript など。詳しくは [MIME タイプ](https://developer.mozilla.org/ja/docs/Web/HTTP/Basics_of_HTTP/MIME_types) を参照） |
+| Content-Length | ファイルサイズ |
+| Date | レスポンスが生成された時刻 |
+| Server | サーバー名 |
+| Set-Cookie | サーバーが指定する、Cookie に保存するデータ |
+
+特に、`Content-Type` はブラウザに対してこのデータが何のデータか伝える重要な役割を持っています。
+
+<Tips>
+[MDN Web Docs: レスポンスヘッダー](https://developer.mozilla.org/ja/docs/Glossary/Response_header) では、より詳しいレスポンスヘッダー一覧を見ることができます。
+</Tips>
+
+#### レスポンスボディ
+
+先ほど示した以下のようなレスポンスで、「... HTMLデータ ...」と記されている部分です。
+
+ここは、実際にページの内容が格納される場所です。
+
+```
+HTTP/1.1 200 OK
+Date: Sun, 23 Jun 2024 22:49:18 GMT
+Content-Type: text/html
+Content-Length: 8888
+
+... HTMLデータ ...
+```
+
+必ずしも HTML である必要はありません。
+単なるテキストや、画像などが含まれている場合もあります。
+
+一般的に Web サイトに画像が埋め込まれているときは、内部では「URL にアクセスすると、レスポンスボディとして画像が返ってきた」という挙動で実装しています。
+
+### curl コマンドで実際の通信を行う
+
+ではここで Windows を例に実演してみましょう。
+画像は少々異なりますが、macOS や Linux でも手順に沿えば同じ手法で通信を行えます。
+
+「ターミナル」もしくは「コマンドプロンプト」を起動してください。
+
+<CaptionImage src="/attachments/meister/js/2024/5/command-prompt.webp" caption="Windows のターミナル。" />
+
+この画面で、`curl`（「カール」と読みます）という HTTP 通信を行えるソフトウェアを呼び出します。
+
+URL は引数として指定します。
+コマンドはスペース区切りで引数を指定できます。
+
+```bash
+curl https://mirrei.dev
+```
+
+このコマンドを入力し、Enter キーで実行してみましょう。
+
+<CaptionImage src="/attachments/meister/js/2024/5/command-prompt-curl.webp" caption="curl の実行結果。" />
+
+実際に HTML で記述された Web ページを閲覧することができました。
+
+#### ヘッダーも見る
+
+`curl` の機能として、リクエストヘッダー・レスポンスヘッダーも見ることができます。
+
+URL の前に `-v` をつけることで、その機能が有効になります。
+
+```bash
+curl -v https://mirrei.dev
+```
+
+<CaptionImage src="/attachments/meister/js/2024/5/command-prompt-curl-verbose.webp" caption="verbose フラグを有効にした curl の実行結果。" />
+
+何やらいろいろな文字が書かれていますが、先頭に `>` がついた行がリクエストヘッダー、先頭に `<` がついた行がレスポンスヘッダーです。
+
+これを抽出すると以下のようになります。
+
+```
+> GET / HTTP/1.1
+> Host: mirrei.dev
+> User-Agent: curl/8.7.1
+> Accept: */*
+>
+
+< HTTP/1.1 200 OK
+< Date: Mon, 24 Jun 2024 00:17:51 GMT
+< Content-Type: text/html; charset=utf-8
+< Transfer-Encoding: chunked
+< Connection: keep-alive
+< Access-Control-Allow-Origin: *
+< Cache-Control: public, max-age=0, must-revalidate
+< referrer-policy: strict-origin-when-cross-origin
+< x-content-type-options: nosniff
+< Vary: Accept-Encoding
+< CF-Cache-Status: DYNAMIC
+< Server: cloudflare
+< alt-svc: h3=":443"; ma=86400
+<
+```
+
+確かに、ヘッダーを使用してファイル以外の情報をやり取りしていることがわかりました。
+
+## fetch を使用して動的にデータを取得する
+
+冒頭に紹介した「地図を表示できる Web サイト」の例では、一度ページが読み込まれた後に、JavaScript を使って追加のデータを取得するプログラムを作成していると説明しました。
+これの実態は、`fetch` と呼ばれるグローバル関数です。
+
+`fetch` は、ブラウザからサーバーへ HTTP リクエストを送信し、その応答（レスポンス）を受け取るための JavaScript の標準メソッドです。
+
+`fetch` 関数は、第一引数にリクエスト先の URL を指定して呼び出します。
+第二引数には、リクエストの詳細を設定するためのオプションオブジェクトを渡すことができます（省略可能）。
+
+```js
+fetch(url, options)
+```
+
+`url` には、データを取得したいサーバーの URL を文字列で指定します。サーバーの部分を省略すると、現在のページと同じサーバーにリクエストを送信します。
+`options` には、リクエストメソッドやヘッダー、送信するデータなどを設定するオブジェクトを指定します。
+
+`fetch` 関数は後述する Promise を返します。この Promise は、サーバーからの応答を受け取ったときに Response オブジェクトで解決されます。
+
+### オプション
+
+`options` オブジェクトには、以下のようなプロパティを指定できます。
+
+#### `method`
+
+リクエストメソッドを指定します。デフォルトは `"GET"` です。
+
+GET メソッドでは原則リクエストボディをつけることができません。
+データを送信したい場合は `"POST"` などを使用するため、このプロパティを使用してリクエストメソッドを変更します。
+
+```js
+fetch("/data", {
+    method: "POST"
+});
+```
+
+#### `headers`
+
+リクエストヘッダーを指定します。オブジェクト形式で、キーにヘッダー名、値にヘッダーの値を指定します。
+
+```js
+fetch("/api/users", {
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer your_token"
+    }
+});
+```
+
+#### `body`
+
+`POST` や `PUT` などのメソッドでサーバーに送信したいデータを指定します。文字列や FormData オブジェクトなどを指定できます。
+
+```js
+fetch("/data", {
+    method: "POST",
+    body: "ここに書かれた文字列が、サーバーに送られます"
+});
+```
+
+### Response オブジェクト
+
+`fetch` が返す Promise が解決されると得られるのが Response オブジェクトです。
+このオブジェクトには、サーバーからの応答に関する情報が含まれています。
+
+#### Promise とは
+
+`fetch` 関数が返す **Promise** とは、「将来完了する処理」を表すオブジェクトです。
+サーバーからの応答を受け取るという処理は、時間がかかるためすぐに結果が得られません。
+Promise は、その「時間がかかる処理」が終わったときに、その結果を教えてくれる仕組みです。
+
+Promise オブジェクトには `.then()` というメソッドがあり、これを使うことで「処理が成功したら実行したい関数」を登録できます。
+`fetch` の場合は、サーバーからの応答（Response オブジェクト）が得られたときに `.then()` に登録した関数が実行されます。
+
+Promise は非同期処理という概念の一つで、今回は取り扱わないため、とりあえず `.then()` メソッドだけ覚えておけばよいでしょう。
+
+`.then()` メソッドは、第一引数に関数を要求します。
+その関数に代入されるのは、Promise が解決されると得られるオブジェクトです。
+
+```js
+fetch(url)
+    .then(response => {
+        // サーバーからの応答が得られたら、この部分が実行される
+        // response には Response オブジェクトが入っている
+    });
+```
+
+<Hint>
+ここで使用している `response => { ... }` という書き方は、アロー関数と呼ばれる、無名関数を簡単に書くための構文です。
+</Hint>
+
+#### `response.status`
+
+HTTP ステータスコードを表す数値です。
+成功すれば `200`, ページが見つからなければ `404` が返ります。
+
+#### `response.ok`
+
+HTTP ステータスコードが 200-299（成功）の範囲内であれば `true`、それ以外であれば `false` となります。
+リクエストが成功したかどうかを簡単に確認できます。
+
+#### `response.text()`
+
+レスポンスボディを文字列として読み込み、その結果を含む Promise を返します。
+
+```js
+fetch("/hello")
+    .then(response => response.text())
+    .then(text => {
+        console.log(text); // テキストデータを使用
+    });
+```
+
+#### `response.json()`
+
+レスポンスボディをオブジェクトとして読み込み、その結果を含む Promise を返します。
+
+HTTP の通信上では文字列しか送信できません。
+JavaScript のオブジェクトを送りたい場合は、JSON 形式に変換して文字列として送信する必要があります。
+受信する際このメソッドを使用することで、JSON 形式の文字列を自動的に JavaScript のオブジェクトに変換してくれます。
+
+```js
+fetch("/hello")
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // data にはオブジェクトが入っている
+        console.log(data.message); // オブジェクトのプロパティにアクセスできる
+    });
+```
+
+## 課題
+
+前回までで、以下のようなキャンバス（実態は table 要素）に色を塗れる Web アプリケーションを作成しました。
+最終回である今回は、このキャンバスの色データを取得、および自分が塗った色のデータを送信し、インターネットを通じて同期できる仕組みを作成します。
+
+<CaptionImage src="/attachments/meister/js/2026/6/pixel-painter.webp" caption="前回までで作成したピクセルアートアプリ。" />
+
+今回も標準メソッドを使用します。以下の標準メソッド一覧を参照してください。
+
+<Link to="/manual/js/standard-methods">JavaScript の標準メソッド</Link>
+
+### 外部スクリプトを導入する
+
+この課題では Web 標準で扱える fetch 関数を使用しますが、大量の通信が発生しないよう、外部スクリプトを導入していただきます。
+
+この外部スクリプトを導入しない場合、エラーが発生し課題が進められませんのでご注意ください。
+この外部スクリプトを導入しても、fetch 関数の使い方は変わりません。
+
+この外部スクリプトは、自分が書いた JavaScript コードの前に読み込む必要があります。
+src 属性を持つ script タグを新しく作成して、以下の URL を指定してください。
+
+```html
+<script src="https://docs.mirrei.dev/attachments/meister/js/2026/6/library.js"></script>
+
+<script>
+    // ...
+```
+
+この外部スクリプトももちろん JavaScript で書かれています。
+URL にブラウザでアクセスしてみると、JavaScript のコードが表示されます。
+
+### 定期的にサーバーからデータを取得する
+
+**他の受講者がサーバーに保存したデータを表示する**ようにします。
+
+- 1 秒ごとにデータ取得処理を実行します。
+- `https://docs.mirrei.dev/api/meister/js/2026/pixels` へ GET メソッドの HTTP リクエストを送信します。
+- 帰ってきた JSON（オブジェクト、ここでは仮に `data` とする）を解析し、キャンバスの色を更新します。
+    - `data.pixels` には、塗られたピクセルの情報が配列として格納されています。配列の中身はオブジェクトであり、以下のようにアクセスできます。
+        - `data.pixels[?].color` : 色の値（例: `#AABBCC`）
+        - `data.pixels[?].x` : X 座標
+        - `data.pixels[?].y` : Y 座標
+        - 例: `data.pixels[0].color` は、最初のピクセルの色を取得できます。
+
+<Hint>
+ある一定の時間ごとに動作を実行させるには、[setInterval 関数](/manual/js/standard-methods#setinterval)を使用します。
+第一引数に指定するコールバック（実行する内容）は、前回の onclick でも触れたように無名関数を使用します。
+</Hint>
+
+<Hint>
+配列をループ処理するには、[for 文](2#よく使用される-for-文)を使用します。
+</Hint>
+
+<Hint>
+X 座標が `x`、Y 座標が `y`、幅が `width` という変数にあるとすると、それが何個目のピクセルであるかは `y * width + x` で計算できます。
+
+これを使用すると、[前回使用した `getElementsByTagName`](5#documentgetelementsbytagnametagname)、および配列のインデックス指定 `[]` で、指定した座標のピクセル（td 要素）を取得できます。
+
+```js
+？.getElementsByTagName(？)[y * width + x]
+```
+
+取得できたら、前回と同様のコードで背景色を変更することで、キャンバスの色を更新できます。
+</Hint>
+
+### 塗った色をサーバーに送信する
+
+クリックしたらすでに色が変わるようになっていますが、ここに**塗った色をサーバーに送信する**処理を追加します。
+
+- 色を塗ったとき、`https://docs.mirrei.dev/api/meister/js/2026/pixels/[x]/[y]` へ PUT メソッドの HTTP リクエストを送信します。
+    - `[x]`、`[y]` はキャンバスの左上を原点 (0, 0) とした際の X 座標、Y 座標を代入します。
+        - `[]` は不要です。例: `https://docs.mirrei.dev/api/meister/js/2026/pixels/1/2`
+    - リクエストボディは、`#AABBCC` の RGB フォーマットのテキストとします。
+        - 前回実装した input 要素の value プロパティをそのまま利用できます。
+
+<Hint>
+URL に変数を埋め込むには、[`+` を用いた文字列結合](1#文字列の連結)か、[テンプレートリテラル](1#テンプレートリテラル)を使用します。
+</Hint>
+
+## 宣伝とおまけ
+
+### 宣伝: TA 募集中！
+
+全6回に及ぶ課題お疲れさまでした！
+JavaScript が好きな方、ぜひ次年度の「組み込みシステム開発マイスター」の TA に応募してみてください！
+
+### 宣伝: 講義資料の編集歓迎！
+
+この講義資料、および今回の課題で使用されたサーバープログラムは GitHub 上で公開されています。
+
+Issue / Pull Requests などで、GitHub アカウントを持っている人なら誰でも講義資料の編集に参加することができます。
+わかりにくい点や誤字脱字、標準メソッドの書き漏れなどがあれば、ぜひ編集してみてください。
+
+<CaptionImage src="/attachments/meister/js/2026/6/github-repository.webp" cite="https://github.com/mirrei-y/docs" caption="この講義資料をホスティングしている GitHub のリポジトリ。" />
+
+<Link to="https://github.com/mirrei-y/docs">GitHub リポジトリ</Link>
+
+### おまけ
+
+以下におまけ記事も用意しました。
+発展的な内容が知りたい方は、ぜひ読んでみてください。
+
+ちょっと脆弱性あたりの話をしています。
+
+<Link to="/meister/js/2026/6/extra">おまけ</Link>

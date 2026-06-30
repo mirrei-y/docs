@@ -1,0 +1,326 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: 第6回+ おまけ
+description: 外部スクリプトを読んで仕組みを暴いたり、脆弱な点を見つけてみよう！
+written_by: Mirrei
+created_at: 2026-06-14 18:34:42
+updated_at: null
+parent: /meister/js/2026/6
+---
+
+import Info from "/src/components/Article/Info.astro";
+import Tips from "/src/components/Article/Tips.astro";
+import Hint from "/src/components/Article/Hint.astro";
+import Caution from "/src/components/Article/Caution.astro";
+import InlineImages from "/src/components/Article/InlineImages.astro";
+import CaptionImage from "/src/components/Article/CaptionImage.astro";
+import Assignment from "/src/components/Article/Assignment.astro";
+import Example from "/src/components/Article/Example.astro";
+import ExampleTable from "/src/components/Article/Example/Painter/Table.astro";
+import Link from "/src/components/Article/Link.astro";
+
+## 残念なお知らせ
+
+非常に残念ながら、今まで作ったピクセルペインターには、脆弱な点が数多くあります。
+以下のように外部スクリプトを導入していただいたのは、その脆弱な点を半ば無理やり修正しているためです。
+
+```html
+<script src="https://docs.mirrei.dev/attachments/meister/js/2026/6/library.js"></script>
+```
+
+なおこれは、受講者の問題ではありません。
+6回で作るにあたって教えきれないことが数多く存在するためです。
+
+この外部スクリプトの内容を見てみましょう。
+長いですが、コメントをつけているので、順番に文字列の内容や単語だけ拾っていくとわかるかもしれません。
+
+```js
+(async function() {
+    /**
+     * 元の fetch 関数
+     */
+    const originalFetch = window.fetch;
+    /**
+     * 元の setInterval 関数
+     */
+    const originalSetInterval = window.setInterval;
+    /**
+     * リクエストキュー
+     * @type {{ x: number; y: number; color: string; }[]}
+     */
+    let queue = [];
+    /**
+     * リクエストキュー Promise
+     * @type {Promise<void> | null}
+     */
+    let queuePromise = null;
+
+    /**
+     * 指定された期間待ちます。
+     * @param {number} milliseconds 期間（ミリ秒）
+     */
+    async function wait(milliseconds) {
+        return await new Promise(resolve => setTimeout(resolve, milliseconds));
+    }
+
+    /**
+     * 上書きする fetch 関数
+     * @param {RequestInfo | URL} input
+     * @param {RequestInit | undefined} init
+     */
+    async function fetch(input, init) {
+        const url = new URL(input);
+        if ((init?.method ?? "GET") === "GET" && url.href.startsWith("https://docs.mirrei.dev/api/meister/js/2026/pixels")) {
+            return await originalFetch(input, init);
+        } else if (init?.method === "PUT" && url.href.startsWith("https://docs.mirrei.dev/api/meister/js/2026/pixels/")) {
+            const [_, xStr, yStr] = /\/pixels\/(\d+)\/(\d+)$/.exec(url.href) ?? [];
+            const x = parseInt(xStr ?? "-1");
+            const y = parseInt(yStr ?? "-1");
+            if (x === -1 || y === -1) throw new Error("ライブラリエラー: X, Y 座標が読み取れませんでした。");
+
+            const request = new Request(input, init);
+            const text = await request.text();
+            if (text[0] !== "#") throw new Error("ライブラリエラー: #AABBCC の RGB フォーマットで指定してください。");
+
+            addToQueue(x, y, text);
+            return new Response(null, { status: 201 });
+        } else {
+            throw new Error("ライブラリエラー: 講義用仮想エンドポイント以外にはアクセスできません。");
+        }
+    }
+    window.fetch = fetch;
+
+    /**
+     * 上書きする setInterval 関数
+     * @param {Function} handler ハンドラ
+     * @param {number} timeout 時間
+     */
+    function setInterval(handler, timeout) {
+        const timeout_ = typeof timeout !== "number" ? 0 : timeout;
+        if (timeout_ < 500) throw new Error("ライブラリエラー: 500ms 未満の同期間隔が指定されました。");
+        handler(); // NOTE: 標準外の挙動だが、一度呼んであげるのがよい
+        return originalSetInterval(() => {
+            if (document.hidden) return; // NOTE: タブが非アクティブのときは呼ばない
+            handler();
+        }, timeout_);
+    }
+    window.setInterval = setInterval;
+
+    /**
+     * 更新反映キューに追加します。
+     * @param {number} x キャンバスX座標
+     * @param {number} y キャンバスY座標
+     * @param {string} color 色
+     */
+    function addToQueue(x, y, color) {
+        queue.push({ x, y, color });
+
+        if (!queuePromise) queuePromise = new Promise(async (resolve) => {
+            while (queue.length > 0) {
+                console.debug(queue);
+
+                try {
+                    await originalFetch("https://docs.mirrei.dev/api/meister/js/2026/pixels", {
+                        method: "POST",
+                        body: JSON.stringify(queue)
+                    });
+                    queue = [];
+                } catch (e) {
+                    console.error("ライブラリエラー: キューの処理に失敗しました:", e);
+                    break;
+                } finally {
+                    await wait(500);
+                }
+            }
+
+            queuePromise = null;
+            resolve();
+        });
+    }
+})();
+```
+
+## 脆弱な点
+
+### リクエストの書き換えとキューイング
+
+このスクリプトでは、fetch 関数を上書きして、講義用仮想エンドポイント（URL）以外にはアクセスできないようにしています。
+
+実は `/api/meister/js/2026/pixels/[x]/[y]` というエンドポイントは実際には存在しません。
+みなさんが発行したリクエストを、内部で書き換えてからアクセスしています。
+
+#### 理由
+
+理由としては、単純にお金の問題です。
+
+下のほうを見ると、`addToQueue` 関数で、リクエストをまとめて（キューイングして）送信するようにしています。
+これは、みなさんが一度に大量のリクエストを送信してしまうと、サーバーが耐えられなくなってしまうためです。
+
+```js
+/**
+ * 更新反映キューに追加します。
+ * @param {number} x キャンバスX座標
+ * @param {number} y キャンバスY座標
+ * @param {string} color 色
+ */
+function addToQueue(x, y, color) {
+    queue.push({ x, y, color });
+
+    // ...
+```
+
+仮に幅 100、高さ 50 のキャンバスの全ピクセルを同時に書き換えたとすると、100 × 50 = 5,000 個のピクセルを書き換えることになります。
+しかしみなさんが書いた以下のようなコードでは 1 ピクセルを書き換えるたびに 1 リクエストが発行されてしまいます。
+
+```js
+fetch(`https://docs.mirrei.dev/api/meister/js/2026/pixels/${x}/${y}`, {
+    method: "PUT",
+    body: input.value
+});
+```
+
+これを全受講者 30 人程度が同時に実行すると、5,000 × 30 = 15 万リクエストが発行されてしまいます。
+
+<CaptionImage src="/attachments/meister/js/2026/6/extra/cloudflare-workers-limits.webp" cite="https://developers.cloudflare.com/workers/platform/limits/" caption="Cloudflare Workers の無料枠を示した表。" />
+
+ところでこの Web サイトおよび API エンドポイントは Cloudflare という会社が提供している Cloudflare Workers というクラウドのサービス上で、**完全無料枠で**動作しています。
+無料枠は 2026 年現在 10 万リクエスト/日までです。
+
+つまりぜんぜん足りません。
+キューイングしてまとめて送信しないと、無料枠を超えて有料になってしまいます。
+
+クラウドは怖いですね。（感想）
+こういうところで儲けるんでしょうね。
+
+### setInterval で大量のリクエストをガードする
+
+また同様の理由で setInterval 関数も上書きされています。
+
+```js
+/**
+ * 上書きする setInterval 関数
+ * @param {Function} handler ハンドラ
+ * @param {number} timeout 時間
+ */
+function setInterval(handler, timeout) {
+    const timeout_ = typeof timeout !== "number" ? 0 : timeout;
+    if (timeout_ < 500) throw new Error("ライブラリエラー: 500ms 未満の同期間隔が指定されました。");
+    handler(); // NOTE: 標準外の挙動だが、一度呼んであげるのがよい
+    return originalSetInterval(() => {
+        if (document.hidden) return; // NOTE: タブが非アクティブのときは呼ばない
+        handler();
+    }, timeout_);
+}
+window.setInterval = setInterval;
+```
+
+> ライブラリエラー: 500ms 未満の同期間隔が指定されました。
+
+実は、500 ミリ秒（0.5 秒）未満は弾くようになっています。
+
+以下のようなプログラムを書いてみたとしましょう。
+
+```js
+setInterval(() => {
+    fetch(...);
+}, 1);
+```
+
+本当は 1 秒、つまり 1000 ミリ秒ごとにリクエストを送信するつもりだったのですが、単位を勘違いし 1 ミリ秒ごとに送信するコードが出来上がっています。
+つまり、秒間 1000 リクエストを送信することになります。
+
+このように、受講者が意図せず大量のリクエストを送信してしまうことも考えられるので、500 ミリ秒未満の同期間隔は弾くようにしています。
+
+### 財布に嫌がらせする（しないで）
+
+これらの事実を知ったあなたは、以下の単純なコードで嫌がらせを行うことができます。
+
+```js
+// 例: 100000 回書き換える
+for (let i = 0; i < 100000; i++) {
+    fetch(`https://docs.mirrei.dev/api/meister/js/2026/pixels`, {
+        method: "PUT",
+        body: JSON.stringify([
+            { x: 0, y: 0, color: "#ffffff" }
+        ])
+    });
+}
+```
+
+これは DoS と呼ばれる古典的な攻撃手法です。
+言い換えれば「ひたすらリクエストを送り続ける」というものです。
+
+しかしこの場合、ただサーバーが落とされるより非常に厄介なこと、「財布から引き落とされる」が発生します。
+これは Cloudflare Workers などのクラウドサービスを利用している弊害です。
+
+クラウドは怖いですね。（感想）
+こういうところで儲ける……というわけではなく、さすがに明らかに悪意ある DoS に対しては請求はされないようです。少なくとも Cloudflare は。
+
+<Caution>
+この Cloudflare Workers では Web サイトも同時に動かしているので、有料枠まで来ると **Web サイトが見られなくなってしまいます**。
+講義に支障が出るので、**やってみる場合は講義が終わった後**でお願いします。
+</Caution>
+
+<Caution>
+また、Cloudflare はそもそも Web サービスを攻撃者から守るためのサービスも兼ねています。
+やりすぎはあなたが攻撃者であると判断され、他の Cloudflare を利用している Web サイトが見られなくなる危険性があります。
+
+> [サイトの管理者に連絡しろと言われるんだけど、それをするにはサイト内のフォームを使う必要があって、でもそのサイト自体にアクセスできないんです。Twitterで連絡しようともしたんですが、どうやらしばらく使ってないみたいです。](https://www.reddit.com/r/CloudFlare/comments/1b3hhro/sorry_you_have_been_blocked/?tl=ja)
+
+実際に誤って BAN されて困っている……のような事例は起きています。
+**やってみる場合はほどほど（せいぜい 1 回につき 100 ピクセル程度）にしてください**。
+</Caution>
+
+## もっと脆弱にする
+
+### クロスサイトスクリプティング（XSS）
+
+今回のピクセルペインターでは発生しない脆弱性として、クロスサイトスクリプティング（XSS）があります。
+これは、悪意あるユーザーが JavaScript を仕込んだデータをアップロードすると、そのデータがページに表示される際に、仕込まれた JavaScript が実行されてしまう脆弱性です。
+
+今回は以下のようなコードをよく書いていましたね。
+
+```js
+td.style.backgroundColor = pixel.color;
+```
+
+何の変哲もない背景色を変えるコードです。
+しかし、もしこのアプリのコンセプトが「ピクセルペインター」ではなく「表にメッセージを書き込めるテーブル型掲示板」だったとしたらどうでしょうか。
+
+```js
+td.innerHTML = pixel.message;
+```
+
+`innerHTML` というのは、DOM 操作の一種で、HTML の文字列を入れることでその HTML を DOM に変換してくれる便利なプロパティです。
+
+仮に、`pixel.message` に `<script>alert("XSS");</script>` という文字列が入っていた場合はどうでしょうか。
+以下と同値になりますね。
+
+```js
+td.innerHTML = '<script>alert("XSS");</script>';
+```
+
+この場合、`<script>` タグが DOM に変換されてしまうので、ページを開いた瞬間に `alert("XSS");` が実行されてしまいます。
+
+これは、「表にメッセージを書き込めるテーブル型掲示板」においては非常に問題です。
+`pixel.message` や `pixel.color` はサーバーを介して誰でも書き込めるものです。
+誰か一人でもこのようなメッセージを書き込んでしまうと、掲示板を開いた瞬間に全員のブラウザで勝手に JavaScript が実行されてしまうからです。
+
+### バッファオーバーフロー
+
+また、バッファオーバーフローという脆弱性もあります。
+
+```js
+fetch(`https://docs.mirrei.dev/api/meister/js/2026/pixels/9999999999999999/9999999999999999`, {
+    method: "PUT",
+    body: "#AABBCC"
+});
+```
+
+X 座標と Y 座標に非常に大きな値である `9999999999999999` を指定しました。
+
+これはサーバー側の実装によって成功するかしないかは左右されますが（今回は原理的に発生しない方法を採用）、サーバー側でこの大きな値を無制限に受け付けてしまうと、サーバーは「今までより大きい数字が来たから、それを保存できるように配列を拡張しよう」と動きます。
+これらを保存するためには <math><msup><mn>10</mn><mn>32</mn></msup></math> 個の保存領域が必要になります。
+
+このような大きなメモリを確保しようとすると、サーバーはメモリ不足で落ちてしまいます。
+サーバーの作り方によっては、リクエスト 1 つでサーバーが落ちてしまうこともあるということです。
