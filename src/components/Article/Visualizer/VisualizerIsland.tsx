@@ -1,5 +1,5 @@
 /** @jsxImportSource preact */
-import { useSignal, useComputed } from "@preact/signals";
+import { useSignal } from "@preact/signals";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import type { JSX } from "preact";
 import type {
@@ -315,7 +315,8 @@ export default function VisualizerIsland({ ir }: Props): JSX.Element {
 
     useEffect(() => {
         mounted.value = true;
-        const mq = window.matchMedia("(min-width: 48rem) and (pointer: fine)");
+        // PC (十分な横幅) でのみ視覚化を有効化する。モバイルの狭い画面では無効。
+        const mq = window.matchMedia("(min-width: 48rem)");
         const update = () => {
             isDesktop.value = mq.matches;
         };
@@ -323,8 +324,6 @@ export default function VisualizerIsland({ ir }: Props): JSX.Element {
         mq.addEventListener("change", update);
         return () => mq.removeEventListener("change", update);
     }, []);
-
-    const current = useComputed(() => ir.steps[stepIndex.value]);
 
     // SVG 矢印 (参照の描画) を DOM 位置から計算する。
     useLayoutEffect(() => {
@@ -403,7 +402,7 @@ export default function VisualizerIsland({ ir }: Props): JSX.Element {
         );
     }
 
-    const step = current.value;
+    const step = ir.steps[stepIndex.value];
     const last = ir.steps.length - 1;
     const errored = step && (step as any).error;
 
