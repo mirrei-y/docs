@@ -1,0 +1,57 @@
+---
+layout: /src/layouts/ArticleLayout.astro
+title: メモリ視覚化デモ (Execution Visualizer)
+description: JavaScript のメモリ状態の推移をビルド時事前実行で視覚化するデモページです。
+written_by: Mirrei
+created_at: 2026-07-02 17:00:00
+updated_at: null
+parent: /meister/js/2026
+---
+
+import Info from "/src/components/Article/Info.astro";
+import Visualizer from "/src/components/Article/Visualizer.astro";
+
+このページは **JavaScript Execution Visualizer** の動作デモです。
+コードは配信時に実行されるのではなく、**ビルド時に Node.js 上で事前実行**され、
+各ステップのメモリ状態が JSON として埋め込まれています。「次へ」ボタンで実行を1ステップずつ進められます。
+
+<Info>
+メモリ視覚化は PC (マウス操作) 専用です。スマートフォンではコードのみが表示されます。
+</Info>
+
+## 参照の共有 (Reference Sharing)
+
+配列は「参照型」です。`shared = data` としても値はコピーされず、
+同じ実体 (ヒープ) を指すことを矢印で確認しましょう。
+
+<Visualizer
+    title="配列は参照でコピーされる"
+    shadow={`const data = [10, 20, 30];`}
+    code={`const doubled = data.map(x => x * 2);
+const shared = data;
+shared.push(40);`}
+/>
+
+## オブジェクトと循環参照 (Circular Reference)
+
+オブジェクトが自分自身を参照しても、Safe Serializer がポインタに変換するため
+無限ループになりません。
+
+<Visualizer
+    title="オブジェクト・ネスト・循環参照"
+    code={`const user = { name: "みっち", age: 20 };
+const team = { leader: user, members: [user] };
+user.team = team;`}
+/>
+
+## プリミティブの再代入
+
+数値や文字列などのプリミティブ値は、変数に直接格納されます (参照ではありません)。
+
+<Visualizer
+    title="プリミティブは値そのものを持つ"
+    code={`let count = 0;
+count = count + 5;
+let message = "hello";
+let done = true;`}
+/>
