@@ -1,0 +1,445 @@
+---
+// JavaScript Execution Visualizer - MDX から使うエントリコンポーネント。
+//
+// ビルド時に ShadowCode + VisibleCode を Node.js の vm 上で事前実行し、
+// メモリ状態の推移を IR (JSON) 化して Preact アイランドへ埋め込む。
+// クライアントでは一切コードを実行しない (静的 IR を再生するだけ)。
+//
+// 使い方 (MDX、テンプレートリテラルでコードを渡す):
+//   <Visualizer
+//     shadow={`const data = [10, 20, 30];`}
+//     code={`const result = data.map(x => x * 2);`}
+//   />
+//   - shadow: 画面に表示しない準備コード (任意)
+//   - code:   画面に表示し、視覚化対象となるコード (必須)
+//
+// IR (中間表現) は remark プラグイン (remark-visualizer.ts) がビルド時に
+// 事前計算し、`ir` 属性 (JSON 文字列) として注入する。ここでは実行しない。
+
+import VisualizerIsland from "./Visualizer/VisualizerIsland.tsx";
+import type { IR } from "../../lib/visualizer/types.ts";
+
+interface Props {
+    // remark プラグインが注入する JSON 文字列 (または IR オブジェクト)。
+    ir?: string | IR;
+    code?: string;
+    shadow?: string;
+    title?: string;
+}
+
+const { ir: rawIr, title } = Astro.props;
+
+let ir: IR;
+if (typeof rawIr === "string") {
+    ir = JSON.parse(rawIr) as IR;
+} else if (rawIr && typeof rawIr === "object") {
+    ir = rawIr;
+} else {
+    ir = {
+        code: Astro.props.code ?? "",
+        error: "IR が生成されていません。<Visualizer> は .mdx ファイル内で使用してください。",
+        steps: [],
+    };
+}
+---
+
+<figure class="viz-figure">
+    <figcaption class="viz-figcaption">
+        <span class="viz-badge">メモリ視覚化</span>
+        {title ? <span class="viz-title">{title}</span> : null}
+    </figcaption>
+    <VisualizerIsland ir={ir} client:visible />
+</figure>
+
+<style is:global>
+    .viz-figure {
+        --viz-accent: #6562bd;
+        --viz-accent2: #1d67d5;
+        --viz-surface: #80808011;
+        --viz-border: #80808066;
+
+        margin: 1.5rem 0;
+        border: 1px solid var(--viz-border);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        background: var(--viz-surface);
+    }
+    .viz-figcaption {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid var(--viz-border);
+        background: linear-gradient(to right, #6562bd22, #1d67d522);
+    }
+    .viz-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #fff;
+        background: var(--viz-accent);
+        padding: 0.2em 0.7em;
+        border-radius: 999px;
+        line-height: 1;
+    }
+    .viz-title {
+        font-weight: 600;
+    }
+
+    .viz-root {
+        padding: 1rem;
+    }
+
+    /* コントロール */
+    .viz-controls {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .viz-controls button {
+        padding: 0.4em 0.9em;
+        font-size: 0.9rem;
+        border: 1px solid var(--viz-accent);
+        border-radius: 0.5rem;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+    }
+    .viz-controls button:hover:not(:disabled) {
+        background: var(--viz-accent);
+        color: #fff;
+        border-color: var(--viz-accent);
+    }
+    .viz-controls button:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+    .viz-step-counter {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        min-width: 8em;
+        text-align: center;
+    }
+    .viz-label {
+        font-size: 0.85rem;
+        opacity: 0.75;
+        margin-left: auto;
+    }
+
+    /* パネル (コード / メモリ) */
+    .viz-panels {
+        display: flex;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    @media (max-width: 60rem) {
+        .viz-panels {
+            flex-direction: column;
+        }
+    }
+
+    /* コード表示 */
+    .viz-code {
+        margin: 0;
+        padding: 0.75rem 0;
+        min-width: 16rem;
+        max-width: 26rem;
+        flex-shrink: 0;
+        overflow: auto;
+        background: #1e1e28;
+        color: #e6e6f0;
+        border-radius: 0.5rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85rem;
+        line-height: 1.7;
+    }
+    @media (max-width: 60rem) {
+        .viz-code {
+            max-width: none;
+        }
+    }
+    .viz-line {
+        display: flex;
+        padding-inline: 0.75rem;
+        white-space: pre;
+    }
+    .viz-line-active {
+        background: #6562bd55;
+        box-shadow: inset 3px 0 0 var(--viz-accent);
+    }
+    .viz-lineno {
+        display: inline-block;
+        width: 2em;
+        margin-right: 1em;
+        text-align: right;
+        opacity: 0.4;
+        user-select: none;
+    }
+    .viz-linetext {
+        flex: 1;
+    }
+
+    /* メモリ領域 */
+    .viz-memory {
+        position: relative;
+        flex: 1;
+        min-height: 12rem;
+        max-height: 34rem;
+        overflow: auto;
+        padding: 0.5rem;
+    }
+    .viz-memory-cols {
+        display: flex;
+        gap: 2.5rem;
+        align-items: flex-start;
+        min-width: min-content;
+    }
+    .viz-col-title {
+        margin: 0 0 0.5rem;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
+        opacity: 0.6;
+        border-bottom: 1px dashed var(--viz-border);
+        padding-bottom: 0.25rem;
+    }
+    .viz-stack {
+        flex-shrink: 0;
+        min-width: 11rem;
+    }
+    .viz-heap {
+        flex: 1;
+    }
+
+    /* スタックフレーム */
+    .viz-frame {
+        border: 1px solid var(--viz-border);
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        background: #80808011;
+    }
+    .viz-frame-name {
+        font-size: 0.75rem;
+        opacity: 0.6;
+        margin-bottom: 0.35rem;
+    }
+    .viz-local {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.2rem 0;
+    }
+    .viz-var-name {
+        font-family: ui-monospace, monospace;
+        font-weight: 600;
+    }
+    .viz-eq {
+        opacity: 0.5;
+    }
+
+    /* プリミティブ値 */
+    .viz-prim {
+        font-family: ui-monospace, monospace;
+        padding: 0.05em 0.4em;
+        border-radius: 0.3em;
+        background: #80808022;
+    }
+    .viz-prim-number {
+        color: #2aa198;
+    }
+    .viz-prim-string {
+        color: #cb7b30;
+    }
+    .viz-prim-boolean {
+        color: #b58900;
+    }
+    .viz-prim-undefined,
+    .viz-prim-null {
+        opacity: 0.6;
+        font-style: italic;
+    }
+
+    /* 参照チップ (ポインタ) */
+    .viz-ref-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+        font-size: 0.8em;
+        font-weight: 600;
+        padding: 0.05em 0.5em;
+        border: 1.5px solid;
+        border-radius: 999px;
+        background: #ffffff11;
+        white-space: nowrap;
+    }
+    .viz-ref-dot {
+        width: 0.55em;
+        height: 0.55em;
+        border-radius: 50%;
+    }
+
+    /* ヒープ */
+    .viz-heap-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem 1.5rem;
+        align-items: flex-start;
+    }
+    .viz-heap-box {
+        position: relative;
+        border: 2px solid var(--viz-accent);
+        border-radius: 0.5rem;
+        min-width: 8rem;
+        max-width: 22rem;
+        background: var(--background-color, #242424);
+        overflow: visible;
+    }
+    .viz-heap-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border-radius: 0.35rem 0.35rem 0 0;
+    }
+    .viz-heap-body {
+        padding: 0.5rem;
+    }
+    .viz-array {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+    .viz-array-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid var(--viz-border);
+        border-radius: 0.35rem;
+        padding: 0.2rem 0.35rem;
+        min-width: 2rem;
+    }
+    .viz-index {
+        font-size: 0.65rem;
+        opacity: 0.5;
+    }
+    .viz-prop {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.15rem 0;
+    }
+    .viz-key {
+        font-family: ui-monospace, monospace;
+        opacity: 0.85;
+    }
+    .viz-size {
+        font-size: 0.75rem;
+        opacity: 0.6;
+        margin-bottom: 0.25rem;
+    }
+    .viz-function {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    .viz-fn-name {
+        font-weight: 700;
+        color: var(--viz-accent2);
+    }
+    .viz-fn-src {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+    .viz-date {
+        font-family: ui-monospace, monospace;
+    }
+    .viz-empty,
+    .viz-more {
+        font-size: 0.8rem;
+        opacity: 0.5;
+        font-style: italic;
+    }
+
+    /* ホバーポップオーバー */
+    .viz-popover {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 20;
+        margin-top: 0.35rem;
+        min-width: 14rem;
+        max-width: 22rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 0.5rem;
+        background: #12121a;
+        color: #e6e6f0;
+        border: 1px solid var(--viz-accent);
+        box-shadow: 0 6px 20px #00000066;
+        font-size: 0.8rem;
+    }
+    .viz-popover-title {
+        font-weight: 700;
+        color: var(--viz-accent);
+        margin-bottom: 0.35rem;
+    }
+    .viz-popover dl {
+        margin: 0;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.15rem 0.6rem;
+    }
+    .viz-popover dt {
+        opacity: 0.6;
+    }
+    .viz-popover dd {
+        margin: 0;
+        word-break: break-word;
+    }
+
+    /* SVG 矢印オーバーレイ */
+    .viz-arrows {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 10;
+        overflow: visible;
+    }
+
+    /* 静的 (モバイル / 読み込み中) フォールバック */
+    .viz-static .viz-code,
+    .viz-error .viz-code {
+        max-width: none;
+    }
+    .viz-note,
+    .viz-error-msg {
+        margin: 0.5rem 0 0;
+        font-size: 0.85rem;
+        opacity: 0.75;
+    }
+    .viz-error-msg {
+        color: #d64545;
+        opacity: 1;
+    }
+
+    @media (prefers-color-scheme: light) {
+        .viz-code {
+            background: #f4f4fb;
+            color: #1e1e28;
+        }
+        .viz-line-active {
+            background: #6562bd33;
+        }
+        .viz-popover {
+            background: #ffffff;
+            color: #1e1e28;
+        }
+    }
+</style>
